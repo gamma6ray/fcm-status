@@ -24,7 +24,9 @@ These broadcasts are not a public API but are verified working reliable on Andro
 
 ## Screenshots
 
-(Place screenshots / screen recordings here.)
+<p align="center">
+  <img src="assets/screenshot.jpg" alt="FCM Status Checker screenshot" width="300">
+</p>
 
 ## Download
 
