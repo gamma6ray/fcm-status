@@ -20,7 +20,17 @@ Taps undocumented Play Services broadcasts to send FCM heartbeats on a configura
 - Survives boot if keep-alive was enabled
 - Interval response** shown live in the app
 
-These broadcasts are not a public API but are verified working reliable on Android 15 devicse. GCM internal FCM diagnostics screen (`*#*#426#*#*`) is available from the app — both via a direct Intent launch (if GMS allows) or a fallback that copies the code and opens the dialer.
+These broadcasts are not a public API but are verified working reliably on Android 15 devices. The GCM internal FCM diagnostics screen (`*#*#426#*#*`) is available from the app — both via a direct Intent launch (if GMS allows) or a copy-to-clipboard fallback that opens the dialer.
+
+### Battery optimization
+
+Many manufacturers like Samsung, vivo, Xiaomi, OnePlus, and Huawei impose background restrictions that go beyond stock Android Doze. If the keep-alive stops running after the screen turns off:
+
+1. Long-press the app icon and tap **App info**.
+2. Go to **Battery** (or **Power usage**).
+3. Set it to **Unrestricted** (or **Don't optimize / Not optimized**).
+
+The app also has an in-app button that opens the system's Doze whitelist directly.
 
 ## Screenshots
 
