@@ -28,7 +28,7 @@ These broadcasts are not a public API but are verified working reliable on Andro
 
 ## Download
 
-Pre-built debug APK: [Releases](https://github.com/USERNAME/fcm-status/releases) <!-- Replace USERNAME with your GitHub username -->
+Pre-built debug APK: [Releases](https://github.com/gamma6ray/fcm-status/releases)
 
 ## Build from source
 
