@@ -10,7 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.RectF;
+import android.graphics.Path;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -571,22 +571,25 @@ public class MainActivity extends AppCompatActivity {
             super.onDraw(canvas);
             float w = getWidth();
             float h = getHeight();
-            RectF arc = new RectF(w * 0.34f, -h * 0.95f, w * 1.24f, h * 1.34f);
+            Path arc = new Path();
+            arc.moveTo(w * 0.40f, h * 0.18f);
+            arc.cubicTo(w * 0.66f, -h * 0.05f, w * 0.90f, h * 0.08f,
+                    w * 1.18f, h * 0.58f);
 
             glow.setStyle(Paint.Style.STROKE);
-            glow.setStrokeWidth(18 * density);
+            glow.setStrokeWidth(13 * density);
             glow.setAlpha(80);
             glow.setShader(new LinearGradient(w * 0.35f, 0, w, h,
                     Color.rgb(20, 110, 255), Color.rgb(225, 35, 245), Shader.TileMode.CLAMP));
             glow.setShadowLayer(22 * density, 0, 0, Color.rgb(50, 95, 255));
-            canvas.drawArc(arc, 202, 62, false, glow);
+            canvas.drawPath(arc, glow);
 
             line.setStyle(Paint.Style.STROKE);
             line.setStrokeWidth(2.2f * density);
             line.setShader(new LinearGradient(w * 0.4f, 0, w, h,
                     Color.rgb(30, 125, 255), Color.rgb(230, 35, 245), Shader.TileMode.CLAMP));
             line.setShadowLayer(8 * density, 0, 0, Color.rgb(102, 60, 255));
-            canvas.drawArc(arc, 202, 62, false, line);
+            canvas.drawPath(arc, line);
         }
     }
 }
