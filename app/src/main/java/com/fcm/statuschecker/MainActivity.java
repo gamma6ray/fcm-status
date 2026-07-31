@@ -95,7 +95,17 @@ public class MainActivity extends AppCompatActivity {
         }
     };
     private final SharedPreferences.OnSharedPreferenceChangeListener prefListener =
-            (sp, key) -> { if (HeartbeatManager.KEY_LAST_SENT.equals(key)) updateLastSent(); };
+            (sp, key) -> {
+                if (HeartbeatManager.KEY_LAST_SENT.equals(key)) updateLastSent();
+                if (HeartbeatManager.KEY_LAST_PROBE_OK.equals(key)
+                        || HeartbeatManager.KEY_LAST_PROBE_PORT.equals(key)) {
+                    usedPort = HeartbeatManager.getLastProbeOk(this)
+                            ? HeartbeatManager.getLastProbePort(this) : -1;
+                    probeDone = true;
+                    probing = false;
+                    render();
+                }
+            };
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

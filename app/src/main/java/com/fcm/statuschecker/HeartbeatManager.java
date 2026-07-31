@@ -14,6 +14,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import java.text.SimpleDateFormat;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.Date;
 import java.util.Locale;
 
@@ -31,6 +34,9 @@ public final class HeartbeatManager {
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_INTERVAL = "interval_min";
     static final String KEY_LAST_SENT = "last_sent";
+    static final String KEY_LAST_PROBE_OK = "last_probe_ok";
+    static final String KEY_LAST_PROBE_PORT = "last_probe_port";
+    static final String KEY_LAST_PROBE_AT = "last_probe_at";
 
     public static final String CHANNEL_ID = "fcm_heartbeat";
     public static final int NOTIF_ID = 42;
@@ -51,6 +57,8 @@ public final class HeartbeatManager {
     public static int getIntervalMin(Context c) { return prefs(c).getInt(KEY_INTERVAL, DEFAULT_INTERVAL_MIN); }
     public static void setIntervalMin(Context c, int m) { prefs(c).edit().putInt(KEY_INTERVAL, m).apply(); }
     public static long getLastSent(Context c) { return prefs(c).getLong(KEY_LAST_SENT, 0L); }
+    static boolean getLastProbeOk(Context c) { return prefs(c).getBoolean(KEY_LAST_PROBE_OK, false); }
+    static int getLastProbePort(Context c) { return prefs(c).getInt(KEY_LAST_PROBE_PORT, -1); }
     private static void setLastSent(Context c, long t) { prefs(c).edit().putLong(KEY_LAST_SENT, t).apply(); }
 
     /** Fire the heartbeat broadcasts and record the timestamp. */
@@ -58,6 +66,32 @@ public final class HeartbeatManager {
         try { c.sendBroadcast(new Intent(ACTION_GTALK)); } catch (Exception ignored) {}
         try { c.sendBroadcast(new Intent(ACTION_MCS)); } catch (Exception ignored) {}
         setLastSent(c, System.currentTimeMillis());
+        probeMcsAsync(c);
+    }
+
+    /** Test the primary MCS transport without blocking the heartbeat caller. */
+    private static void probeMcsAsync(Context c) {
+        Context app = c.getApplicationContext();
+        new Thread(() -> probeMcs(app), "fcm-connection-probe").start();
+    }
+
+    /** Resolve mtalk.google.com and test the primary FCM MCS socket. */
+    private static void probeMcs(Context c) {
+        int port = -1;
+        boolean ok = false;
+        try {
+            InetAddress.getByName("mtalk.google.com");
+            try (Socket socket = new Socket()) {
+                socket.connect(new InetSocketAddress("mtalk.google.com", 5228), 4000);
+                port = 5228;
+                ok = true;
+            }
+        } catch (Exception ignored) { }
+        prefs(c).edit()
+                .putBoolean(KEY_LAST_PROBE_OK, ok)
+                .putInt(KEY_LAST_PROBE_PORT, port)
+                .putLong(KEY_LAST_PROBE_AT, System.currentTimeMillis())
+                .apply();
     }
 
     private static PendingIntent alarmIntent(Context c) {
