@@ -173,7 +173,9 @@ public class MainActivity extends AppCompatActivity {
     private void renderStatus() {
         boolean playOk = isPlayServicesOk();
         boolean online = isOnline();
-        boolean reachable = !probeDone || (playOk && online && usedPort > 0);
+        // Only show green after the actual mtalk.google.com socket probe succeeds.
+        // A pending probe is not proof that FCM is reachable.
+        boolean reachable = probeDone && playOk && online && usedPort > 0;
         int stateColor = reachable ? GREEN : RED;
 
         FrameLayout banner = new FrameLayout(this);
