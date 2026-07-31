@@ -334,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
         icon.setAlpha(selected ? 1f : 0.55f);
         icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         if (selected) {
-            icon.setBackground(round(0xff10294c, Color.TRANSPARENT, 18));
+            icon.setBackground(round(0xff0b1f3a, Color.TRANSPARENT, 18));
             icon.setPadding(dp(7), dp(4), dp(7), dp(4));
         }
         item.addView(icon, new LinearLayout.LayoutParams(selected ? dp(44) : dp(28), dp(28)));
