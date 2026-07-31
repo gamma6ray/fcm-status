@@ -336,11 +336,12 @@ public class MainActivity extends AppCompatActivity {
         icon.setImageResource(iconRes);
         icon.setAlpha(selected ? 1f : 0.55f);
         icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        icon.setAdjustViewBounds(false);
         if (selected) {
             icon.setBackground(round(0xff0b1f3a, Color.TRANSPARENT, 18));
             icon.setPadding(dp(7), dp(4), dp(7), dp(4));
         }
-        item.addView(icon, new LinearLayout.LayoutParams(selected ? dp(44) : dp(28), dp(28)));
+        item.addView(icon, new LinearLayout.LayoutParams(dp(44), dp(32)));
         TextView title = text(label, selected ? BLUE : MUTED, 12, selected);
         title.setGravity(Gravity.CENTER);
         item.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(22)));
@@ -436,7 +437,8 @@ public class MainActivity extends AppCompatActivity {
         ImageView iconView = new ImageView(this);
         iconView.setImageResource(iconRes);
         iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        if (label.equals("Last heartbeat")) iconView.setTranslationX(-dp(4));
+        iconView.setAdjustViewBounds(false);
+        iconView.setPadding(0, 0, 0, 0);
         if (showIcon) row.addView(iconView, new LinearLayout.LayoutParams(dp(42), dp(42)));
         LinearLayout middle = new LinearLayout(this);
         middle.setGravity(Gravity.CENTER_VERTICAL);
