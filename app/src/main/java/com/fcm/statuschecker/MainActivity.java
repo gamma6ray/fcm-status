@@ -188,9 +188,10 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout subtitleRow = new LinearLayout(this);
         subtitleRow.setGravity(Gravity.CENTER_VERTICAL);
         subtitleRow.setPadding(0, dp(7), 0, 0);
-        View statusLight = new View(this);
-        statusLight.setBackground(circle(stateColor));
-        LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(16), dp(16));
+        ImageView statusLight = new ImageView(this);
+        statusLight.setImageResource(reachable ? R.drawable.ic_status_green : R.drawable.ic_status_red);
+        statusLight.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(32), dp(32));
         lightLp.setMargins(0, 0, dp(8), 0);
         subtitleRow.addView(statusLight, lightLp);
         subtitleRow.addView(text("Google Play Services + FCM server", MUTED, 14, false),
@@ -242,12 +243,12 @@ public class MainActivity extends AppCompatActivity {
         keepAlive.addView(heading);
         addDividerTo(keepAlive);
 
-        LinearLayout intervalRow = settingRow("◷", BLUE, "Heartbeat interval", "");
+        LinearLayout intervalRow = settingRow(R.drawable.ic_clock, "Heartbeat interval", "");
         Spinner spinner = intervalSpinner();
         ((LinearLayout) intervalRow.getChildAt(1)).addView(spinner);
         keepAlive.addView(intervalRow);
         addDividerTo(keepAlive);
-        LinearLayout lastRow = settingRow("⌁", PURPLE, "Last heartbeat", "");
+        LinearLayout lastRow = settingRow(R.drawable.ic_heartbeat, "Last heartbeat", "");
         lastSentValue = text("never", MUTED, 14, true);
         lastSentValue.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         ((LinearLayout) lastRow.getChildAt(1)).addView(lastSentValue, 1);
@@ -267,21 +268,21 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout access = card(16);
         access.addView(text("Background access", WHITE, 20, true));
-        access.addView(settingRow("◈", GREEN, "Battery optimization",
+        access.addView(settingRow(R.drawable.ic_battery, "Battery optimization",
                 isIgnoringBatteryOptimizations() ? "Exempt" : "Open"), full());
         addDividerTo(access);
-        access.addView(settingRow("◉", BLUE, "Autostart guidance", "Open"), full());
+        access.addView(settingRow(R.drawable.ic_autostart, "Autostart guidance", "Open"), full());
         addDividerTo(access);
-        access.addView(settingRow("●", PURPLE, "Post notification",
+        access.addView(settingRow(R.drawable.ic_notification, "Post notification",
                 notificationsGranted() ? "Granted" : "Open"), full());
         addDividerTo(access);
-        access.addView(settingRow("▣", PURPLE, "Lock in recents guidance", "View"), full());
+        access.addView(settingRow(R.drawable.ic_lock, "Lock in recents guidance", "View"), full());
         content.addView(access);
         addSpacer(16);
 
         LinearLayout about = card(16);
         about.addView(text("About", WHITE, 20, true));
-        about.addView(settingRow("ⓘ", PURPLE, "Version", appVersion()), full());
+        about.addView(settingRow(R.drawable.ic_info, "Version", appVersion()), full());
         about.setOnClickListener(v -> showAbout());
         content.addView(about);
         addSpacer(24);
@@ -292,7 +293,13 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.addView(text(label, WHITE, 15, true), weight(1));
-        TextView action = iconButton(back ? "‹" : "☰", WHITE, 42);
+        ImageButton action = new ImageButton(this);
+        action.setImageResource(back ? R.drawable.ic_back : R.drawable.ic_menu);
+        action.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        action.setBackgroundColor(Color.TRANSPARENT);
+        action.setPadding(dp(8), dp(8), dp(8), dp(8));
+        action.setContentDescription(back ? "Back" : "Menu");
+        action.setLayoutParams(new LinearLayout.LayoutParams(dp(42), dp(42)));
         action.setOnClickListener(v -> {
             if (back) { settingsPage = false; render(); } else { settingsPage = true; render(); }
         });
@@ -304,8 +311,8 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout nav = card(18);
         nav.setOrientation(LinearLayout.HORIZONTAL);
         nav.setPadding(dp(8), dp(8), dp(8), dp(6));
-        Button status = navButton("⌁\nStatus", !settingsSelected);
-        Button settings = navButton("⚙\nSettings", settingsSelected);
+        LinearLayout status = navButton(R.drawable.ic_status_wave, "Status", !settingsSelected);
+        LinearLayout settings = navButton(R.drawable.ic_settings, "Settings", settingsSelected);
         status.setOnClickListener(v -> { settingsPage = false; render(); });
         settings.setOnClickListener(v -> { settingsPage = true; render(); });
         nav.addView(status, weight(1));
@@ -313,15 +320,21 @@ public class MainActivity extends AppCompatActivity {
         content.addView(nav);
     }
 
-    private Button navButton(String label, boolean selected) {
-        Button b = new Button(this);
-        b.setText(label);
-        b.setAllCaps(false);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        b.setTextColor(selected ? BLUE : MUTED);
-        b.setGravity(Gravity.CENTER);
-        b.setBackgroundColor(Color.TRANSPARENT);
-        return b;
+    private LinearLayout navButton(int iconRes, String label, boolean selected) {
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.VERTICAL);
+        item.setGravity(Gravity.CENTER);
+        item.setPadding(0, dp(3), 0, dp(3));
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(iconRes);
+        icon.setAlpha(selected ? 1f : 0.55f);
+        icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        item.addView(icon, new LinearLayout.LayoutParams(dp(28), dp(28)));
+        TextView title = text(label, selected ? BLUE : MUTED, 12, selected);
+        title.setGravity(Gravity.CENTER);
+        item.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(22)));
+        item.setBackgroundColor(Color.TRANSPARENT);
+        return item;
     }
 
     private void setKeepAlive(boolean enabled) {
@@ -377,18 +390,23 @@ public class MainActivity extends AppCompatActivity {
         return spinner;
     }
 
-    private LinearLayout settingRow(String icon, int color, String label, String value) {
+    private LinearLayout settingRow(int iconRes, String label, String value) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, dp(9), 0, dp(9));
-        TextView iconView = text(icon, color, 20, true);
-        iconView.setGravity(Gravity.CENTER);
+        ImageView iconView = new ImageView(this);
+        iconView.setImageResource(iconRes);
+        iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        iconView.setPadding(dp(5), dp(5), dp(5), dp(5));
         row.addView(iconView, new LinearLayout.LayoutParams(dp(42), dp(42)));
         LinearLayout middle = new LinearLayout(this);
         middle.setGravity(Gravity.CENTER_VERTICAL);
         middle.addView(text(label, WHITE, 14, false), weight(1));
         if (!value.isEmpty()) middle.addView(text(value, value.equals("Exempt") || value.equals("Granted") ? GREEN : BLUE, 14, true));
-        middle.addView(text("›", MUTED, 26, false), new LinearLayout.LayoutParams(dp(28), dp(42)));
+        ImageView arrow = new ImageView(this);
+        arrow.setImageResource(R.drawable.ic_chevron);
+        arrow.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        middle.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(42)));
         row.addView(middle, weight(1));
         if (label.equals("Battery optimization")) row.setOnClickListener(v -> requestIgnoreBatteryOptimizations());
         if (label.equals("Post notification")) row.setOnClickListener(v -> requestNotificationPermission());
@@ -449,14 +467,6 @@ public class MainActivity extends AppCompatActivity {
         return v;
     }
 
-    private TextView iconButton(String glyph, int color, int size) {
-        TextView b = text(glyph, color, 24, false);
-        b.setGravity(Gravity.CENTER);
-        b.setBackground(round(Color.TRANSPARENT, color, size / 2));
-        b.setContentDescription(glyph);
-        b.setLayoutParams(new LinearLayout.LayoutParams(dp(size), dp(size)));
-        return b;
-    }
 
     private void addDividerTo(LinearLayout parent) {
         View d = new View(this);
@@ -471,8 +481,6 @@ public class MainActivity extends AppCompatActivity {
         if (stroke != Color.TRANSPARENT) d.setStroke(dp(1), stroke);
         return d;
     }
-
-    private GradientDrawable circle(int color) { return round(color, color, 20); }
 
     private GradientDrawable gradient(int start, int end, int radius) {
         GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{start, end});
