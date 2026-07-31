@@ -229,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout lastRow = settingRow("⌁", PURPLE, "Last heartbeat", "");
         lastSentValue = text("never", MUTED, 14, true);
         lastSentValue.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        ((LinearLayout) lastRow.getChildAt(1)).addView(lastSentValue, 0);
+        ((LinearLayout) lastRow.getChildAt(1)).addView(lastSentValue, 1);
         keepAlive.addView(lastRow);
         updateLastSent();
         content.addView(keepAlive);
@@ -281,6 +281,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void bottomNav(boolean settingsSelected) {
         LinearLayout nav = card(18);
+        nav.setOrientation(LinearLayout.HORIZONTAL);
         nav.setPadding(dp(8), dp(8), dp(8), dp(6));
         Button status = navButton("⌁\nStatus", !settingsSelected);
         Button settings = navButton("⚙\nSettings", settingsSelected);
