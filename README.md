@@ -40,7 +40,7 @@ The app also has an in-app button that opens the system's Doze whitelist directl
 
 ## Download
 
-Pre-built debug APK: [Releases](https://github.com/gamma6ray/fcm-status/releases)
+Pre-built APK: [Releases](https://github.com/gamma6ray/fcm-status/releases)
 
 ## Build from source
 
@@ -53,10 +53,10 @@ Requirements:
 ```bash
 cd app-project
 export ANDROID_SDK_ROOT=/path/to/android-sdk
-gradle :app:assembleDebug
+gradle :app:assembleRelease
 ```
 
-APK will be built at `app/build/outputs/apk/debug/app-debug.apk`.
+APK will be built at `app/build/outputs/apk/release/app-release.apk`.
 
 ### Build notes
 
