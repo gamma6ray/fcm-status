@@ -248,16 +248,13 @@ public class MainActivity extends AppCompatActivity {
         keepAlive.addView(heading);
         addDividerTo(keepAlive);
 
-        LinearLayout intervalRow = settingRow(R.drawable.ic_clock, "Heartbeat interval", "", false, false);
-        ((LinearLayout) intervalRow.getChildAt(intervalRow.getChildCount() - 1)).addView(intervalSelector());
-        keepAlive.addView(intervalRow);
+        FrameLayout intervalRow = keepAliveValueRow("Heartbeat interval", intervalSelector());
+        keepAlive.addView(intervalRow, full());
         addDividerTo(keepAlive);
-        LinearLayout lastRow = settingRow(R.drawable.ic_heartbeat, "Last heartbeat", "", false, false);
         lastSentValue = text("never", MUTED, 14, true);
         lastSentValue.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        ((LinearLayout) lastRow.getChildAt(lastRow.getChildCount() - 1)).addView(lastSentValue,
-                new LinearLayout.LayoutParams(dp(250), dp(42)));
-        keepAlive.addView(lastRow);
+        FrameLayout lastRow = keepAliveValueRow("Last heartbeat", lastSentValue);
+        keepAlive.addView(lastRow, full());
         updateLastSent();
         content.addView(keepAlive);
         addSpacer(14);
@@ -380,8 +377,23 @@ public class MainActivity extends AppCompatActivity {
         selector.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(42)));
         selector.setOnClickListener(v -> showIntervalPicker());
         selector.setContentDescription("Heartbeat interval");
-        selector.setLayoutParams(new LinearLayout.LayoutParams(dp(250), dp(42)));
         return selector;
+    }
+
+    private FrameLayout keepAliveValueRow(String label, View valueView) {
+        FrameLayout row = new FrameLayout(this);
+        row.setPadding(0, dp(4), 0, dp(4));
+        TextView labelView = text(label, WHITE, 14, false);
+        labelView.setSingleLine(true);
+        labelView.setGravity(Gravity.CENTER_VERTICAL);
+        FrameLayout.LayoutParams labelLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(42), Gravity.START | Gravity.CENTER_VERTICAL);
+        labelLp.rightMargin = dp(150);
+        row.addView(labelView, labelLp);
+        FrameLayout.LayoutParams valueLp = new FrameLayout.LayoutParams(dp(150), dp(42),
+                Gravity.END | Gravity.CENTER_VERTICAL);
+        row.addView(valueView, valueLp);
+        return row;
     }
 
     private void showIntervalPicker() {
@@ -431,8 +443,10 @@ public class MainActivity extends AppCompatActivity {
         middle.setGravity(Gravity.CENTER_VERTICAL);
         middle.setMinimumHeight(dp(42));
         TextView labelView = text(label, WHITE, 14, false);
+        labelView.setSingleLine(true);
         labelView.setGravity(Gravity.CENTER_VERTICAL);
-        middle.addView(labelView, weight(1));
+        middle.addView(labelView, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         if (!value.isEmpty()) middle.addView(text(value, value.equals("Exempt") || value.equals("Granted") ? GREEN : BLUE, 14, true));
         if (showChevron) {
             ImageView arrow = new ImageView(this);
@@ -440,7 +454,9 @@ public class MainActivity extends AppCompatActivity {
             arrow.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
             middle.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(38)));
         }
-        row.addView(middle, weight(1));
+        row.addView(middle, showIcon ? weight(1) :
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
         if (label.equals("Battery optimization")) row.setOnClickListener(v -> requestIgnoreBatteryOptimizations());
         if (label.equals("Post notification")) row.setOnClickListener(v -> requestNotificationPermission());
         if (label.contains("Autostart")) row.setOnClickListener(v -> showGuidance("Autostart guidance", "Open App info → Autostart and allow FCM Status. vivo may call this Autostart or Background start."));
