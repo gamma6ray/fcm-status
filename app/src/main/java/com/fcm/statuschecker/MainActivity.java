@@ -57,7 +57,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQ_POST_NOTIFICATIONS = 101;
     private static final String MCS_HOST = "mtalk.google.com";
-    private static final int[] MCS_PORTS = {5228, 5229, 5230, 443};
+    // GMS Diagnostics on this device uses the primary FCM MCS transport.
+    // Do not count a fallback port (for example 443) as proof that this transport is usable.
+    private static final int[] MCS_PORTS = {5228};
     private static final int CONNECT_TIMEOUT_MS = 4000;
 
     private static final int BG = Color.rgb(5, 6, 9);
@@ -173,10 +175,11 @@ public class MainActivity extends AppCompatActivity {
     private void renderStatus() {
         boolean playOk = isPlayServicesOk();
         boolean online = isOnline();
-        // Only show green after the actual mtalk.google.com socket probe succeeds.
-        // A pending probe is not proof that FCM is reachable.
-        boolean reachable = probeDone && playOk && online && usedPort > 0;
-        int stateColor = reachable ? GREEN : RED;
+        // Only show green after the actual mtalk.google.com:5228 socket probe succeeds.
+        // A pending probe, or a different fallback port, is not proof that FCM is reachable.
+        boolean reachable = probeDone && playOk && online && usedPort == 5228;
+        boolean checking = probing || !probeDone;
+        int stateColor = checking ? MUTED : (reachable ? GREEN : RED);
 
         FrameLayout banner = new FrameLayout(this);
         banner.setBackgroundColor(BG);
@@ -185,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout bannerContent = new LinearLayout(this);
         bannerContent.setOrientation(LinearLayout.VERTICAL);
         bannerContent.setPadding(0, dp(12), 0, 0);
-        TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 34, true);
+        TextView title = text("FCM is\n" + (checking ? "checking" : (reachable ? "reachable" : "unreachable")), WHITE, 34, true);
         title.setLetterSpacing(0.01f);
         bannerContent.addView(title);
 
@@ -194,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
         subtitleRow.setPadding(0, dp(5), 0, 0);
         ImageView statusLight = new ImageView(this);
         statusLight.setImageResource(reachable ? R.drawable.ic_status_green : R.drawable.ic_status_red);
+        if (checking) statusLight.setColorFilter(MUTED, android.graphics.PorterDuff.Mode.SRC_IN);
         statusLight.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(20), dp(20));
         lightLp.setMargins(0, 0, dp(8), 0);
