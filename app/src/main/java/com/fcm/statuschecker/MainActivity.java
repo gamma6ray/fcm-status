@@ -74,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int PURPLE = Color.rgb(190, 77, 255);
 
     private LinearLayout content;
+    private FrameLayout rootFrame;
+    private LinearLayout bottomNavigation;
     private boolean settingsPage;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
 
@@ -126,14 +128,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void buildRoot() {
+        rootFrame = new FrameLayout(this);
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(BG);
         content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dp(18), dp(16), dp(18), dp(16));
+        content.setPadding(dp(18), dp(16), dp(18), dp(110));
         scroll.addView(content);
-        setContentView(scroll);
+        rootFrame.addView(scroll, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setContentView(rootFrame);
     }
 
     private void startProbe() {
@@ -312,6 +317,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void bottomNav(boolean settingsSelected) {
+        if (bottomNavigation != null) rootFrame.removeView(bottomNavigation);
         LinearLayout nav = card(18);
         nav.setOrientation(LinearLayout.HORIZONTAL);
         nav.setPadding(dp(8), dp(8), dp(8), dp(6));
@@ -321,7 +327,12 @@ public class MainActivity extends AppCompatActivity {
         settings.setOnClickListener(v -> { settingsPage = true; render(); });
         nav.addView(status, weight(1));
         nav.addView(settings, weight(1));
-        content.addView(nav);
+        bottomNavigation = nav;
+        FrameLayout.LayoutParams navLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM);
+        navLp.setMargins(dp(18), 0, dp(18), dp(16));
+        rootFrame.addView(bottomNavigation, navLp);
     }
 
     private LinearLayout navButton(int iconRes, String label, boolean selected) {
