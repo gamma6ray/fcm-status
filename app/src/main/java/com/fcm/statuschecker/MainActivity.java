@@ -95,8 +95,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
         buildRoot();
@@ -172,7 +170,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void renderStatus() {
-        addTopBar("FCM STATUS", false);
         boolean playOk = isPlayServicesOk();
         boolean online = isOnline();
         boolean reachable = !probeDone || (playOk && online && usedPort > 0);
