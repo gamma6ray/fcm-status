@@ -266,8 +266,6 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout diagnostics = card(16);
         diagnostics.addView(text("Diagnostics", WHITE, 20, true));
         diagnostics.addView(diagnosticRow("Open FCM diagnostics", v -> openGcmDiagnostics()), full());
-        addDividerTo(diagnostics);
-        diagnostics.addView(diagnosticRow("View outage history", v -> showOutageHistory()), full());
         content.addView(diagnostics);
         addSpacer(14);
         bottomNav(false);
@@ -639,10 +637,6 @@ public class MainActivity extends AppCompatActivity {
                 "com.google.android.gms",
                 "com.google.android.gms.gcm.GcmDiagnostics"));
         startActivity(intent);
-    }
-
-    private void showOutageHistory() {
-        showGuidance("Outage history", "No outage history has been recorded yet.");
     }
 
     private void showAbout() {
