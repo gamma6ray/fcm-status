@@ -95,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
         buildRoot();
@@ -299,17 +301,17 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.addView(text(label, WHITE, 15, true), weight(1));
-        ImageButton action = new ImageButton(this);
-        action.setImageResource(back ? R.drawable.ic_back : R.drawable.ic_menu);
-        action.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        action.setBackgroundColor(Color.TRANSPARENT);
-        action.setPadding(dp(8), dp(8), dp(8), dp(8));
-        action.setContentDescription(back ? "Back" : "Menu");
-        action.setLayoutParams(new LinearLayout.LayoutParams(dp(42), dp(42)));
-        action.setOnClickListener(v -> {
-            if (back) { settingsPage = false; render(); } else { settingsPage = true; render(); }
-        });
-        bar.addView(action);
+        if (back) {
+            ImageButton action = new ImageButton(this);
+            action.setImageResource(R.drawable.ic_back);
+            action.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            action.setBackgroundColor(Color.TRANSPARENT);
+            action.setPadding(dp(8), dp(8), dp(8), dp(8));
+            action.setContentDescription("Back");
+            action.setLayoutParams(new LinearLayout.LayoutParams(dp(42), dp(42)));
+            action.setOnClickListener(v -> { settingsPage = false; render(); });
+            bar.addView(action);
+        }
         content.addView(bar);
     }
 
