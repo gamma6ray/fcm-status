@@ -178,11 +178,11 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout banner = new FrameLayout(this);
         banner.setBackgroundColor(BG);
         banner.addView(new NeonBanner(this), new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(170)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(155)));
         LinearLayout bannerContent = new LinearLayout(this);
         bannerContent.setOrientation(LinearLayout.VERTICAL);
-        bannerContent.setPadding(0, dp(16), 0, 0);
-        TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 36, true);
+        bannerContent.setPadding(0, dp(12), 0, 0);
+        TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 34, true);
         title.setLetterSpacing(0.01f);
         bannerContent.addView(title);
 
@@ -195,14 +195,16 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(20), dp(20));
         lightLp.setMargins(0, 0, dp(8), 0);
         subtitleRow.addView(statusLight, lightLp);
-        subtitleRow.addView(text("Google Play Services + FCM server", MUTED, 13, false),
-                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView subtitle = text("Google Play Services + FCM server", MUTED, 13, false);
+        subtitleRow.addView(subtitle);
         ImageButton refresh = new ImageButton(this);
         refresh.setImageResource(R.drawable.ic_recheck);
         refresh.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         refresh.setBackgroundColor(Color.TRANSPARENT);
         refresh.setPadding(0, 0, 0, 0);
-        refresh.setLayoutParams(new LinearLayout.LayoutParams(dp(36), dp(36)));
+        LinearLayout.LayoutParams refreshLp = new LinearLayout.LayoutParams(dp(28), dp(28));
+        refreshLp.setMargins(dp(8), 0, 0, 0);
+        refresh.setLayoutParams(refreshLp);
         refresh.setContentDescription("Recheck connection");
         refresh.setOnClickListener(v -> { startProbe(); render(); });
         subtitleRow.addView(refresh);
@@ -212,10 +214,10 @@ public class MainActivity extends AppCompatActivity {
         content.addView(banner);
 
         LinearLayout metrics = card(14);
-        metrics.setPadding(dp(14), dp(8), dp(14), dp(8));
+        metrics.setPadding(dp(14), dp(6), dp(14), dp(6));
         LinearLayout metricRow = new LinearLayout(this);
         metricRow.setGravity(Gravity.CENTER_VERTICAL);
-        metricRow.setMinimumHeight(dp(60));
+        metricRow.setMinimumHeight(dp(54));
         metricRow.addView(metric("SERVER", probing ? "Checking" : (usedPort > 0 ? "Reachable" : "Unreachable"),
                 probing ? MUTED : stateColor), weight(1));
         addMetricDivider(metricRow);
@@ -225,18 +227,19 @@ public class MainActivity extends AppCompatActivity {
         metrics.addView(metricRow);
         content.addView(metrics);
 
-        addSpacer(22);
+        addSpacer(18);
         addGradientButton("Send heartbeat now", v -> {
             HeartbeatManager.sendHeartbeat(this);
             updateLastSent();
             Toast.makeText(this, "Heartbeat sent", Toast.LENGTH_SHORT).show();
         });
-        addSpacer(22);
+        addSpacer(18);
 
         LinearLayout keepAlive = card(16);
+        keepAlive.setPadding(dp(14), dp(10), dp(14), dp(10));
         LinearLayout heading = new LinearLayout(this);
         heading.setGravity(Gravity.CENTER_VERTICAL);
-        heading.addView(text("Keep-alive", WHITE, 21, true), weight(1));
+        heading.addView(text("Keep-alive", WHITE, 20, true), weight(1));
         SwitchCompat toggle = new SwitchCompat(this);
         toggle.setChecked(HeartbeatManager.isEnabled(this));
         toggle.setText("ON");
@@ -251,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout intervalRow = keepAliveValueRow("Heartbeat interval", intervalSelector());
         keepAlive.addView(intervalRow, full());
         addDividerTo(keepAlive);
-        lastSentValue = text("never", MUTED, 14, true);
+        lastSentValue = text("never", MUTED, 13, true);
         lastSentValue.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         FrameLayout lastRow = keepAliveValueRow("Last heartbeat", lastSentValue);
         keepAlive.addView(lastRow, full());
@@ -338,10 +341,10 @@ public class MainActivity extends AppCompatActivity {
         icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         icon.setAdjustViewBounds(false);
         if (selected) {
-            icon.setBackground(round(0xff0b1f3a, Color.TRANSPARENT, 18));
-            icon.setPadding(dp(7), dp(4), dp(7), dp(4));
+            icon.setBackground(round(0xff0a1c34, Color.TRANSPARENT, 14));
+            icon.setPadding(dp(9), dp(5), dp(9), dp(5));
         }
-        item.addView(icon, new LinearLayout.LayoutParams(dp(44), dp(32)));
+        item.addView(icon, new LinearLayout.LayoutParams(dp(40), dp(30)));
         TextView title = text(label, selected ? BLUE : MUTED, 12, selected);
         title.setGravity(Gravity.CENTER);
         item.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(22)));
@@ -388,9 +391,9 @@ public class MainActivity extends AppCompatActivity {
         labelView.setGravity(Gravity.CENTER_VERTICAL);
         FrameLayout.LayoutParams labelLp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(42), Gravity.START | Gravity.CENTER_VERTICAL);
-        labelLp.rightMargin = dp(150);
+        labelLp.rightMargin = dp(180);
         row.addView(labelView, labelLp);
-        FrameLayout.LayoutParams valueLp = new FrameLayout.LayoutParams(dp(150), dp(42),
+        FrameLayout.LayoutParams valueLp = new FrameLayout.LayoutParams(dp(180), dp(42),
                 Gravity.END | Gravity.CENTER_VERTICAL);
         row.addView(valueView, valueLp);
         return row;
@@ -470,8 +473,8 @@ public class MainActivity extends AppCompatActivity {
         long time = HeartbeatManager.getLastSent(this);
         if (time <= 0) { lastSentValue.setText("never"); lastSentValue.setTextColor(MUTED); return; }
         long seconds = Math.max(0, (System.currentTimeMillis() - time) / 1000);
-        String ago = seconds < 60 ? seconds + "s ago" : (seconds / 60) + "m " + (seconds % 60) + "s ago";
-        lastSentValue.setText(HeartbeatManager.formatTime(time) + "  (" + ago + ")");
+        String ago = seconds < 60 ? seconds + "s ago" : (seconds / 60) + "m ago";
+        lastSentValue.setText(HeartbeatManager.formatTime(time) + " · " + ago);
         lastSentValue.setTextColor(GREEN);
     }
 
@@ -486,7 +489,7 @@ public class MainActivity extends AppCompatActivity {
         b.setBackground(gradient(0xff168fff, 0xffe52bf5, 100));
         b.setOnClickListener(listener);
         LinearLayout.LayoutParams lp = full();
-        lp.height = dp(58);
+        lp.height = dp(52);
         lp.setMargins(dp(26), 0, dp(26), 0);
         content.addView(b, lp);
     }
@@ -504,11 +507,11 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER);
-        TextView labelView = text(label, MUTED, 11, false);
+        TextView labelView = text(label, MUTED, 10, false);
         labelView.setGravity(Gravity.CENTER);
         box.addView(labelView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextView valueView = text(value, valueColor, 15, true);
+        TextView valueView = text(value, valueColor, 14, true);
         valueView.setGravity(Gravity.CENTER);
         box.addView(valueView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -518,14 +521,14 @@ public class MainActivity extends AppCompatActivity {
     private void addMetricDivider(LinearLayout row) {
         View divider = new View(this);
         divider.setBackgroundColor(Color.rgb(57, 60, 70));
-        row.addView(divider, new LinearLayout.LayoutParams(dp(1), dp(42)));
+        row.addView(divider, new LinearLayout.LayoutParams(dp(1), dp(36)));
     }
 
     private LinearLayout card(int radius) {
         LinearLayout v = new LinearLayout(this);
         v.setOrientation(LinearLayout.VERTICAL);
         v.setPadding(dp(14), dp(12), dp(14), dp(12));
-        v.setBackground(round(CARD, CARD_BORDER, radius));
+        v.setBackground(cardBackground(radius));
         v.setLayoutParams(full());
         return v;
     }
@@ -542,6 +545,14 @@ public class MainActivity extends AppCompatActivity {
         d.setColor(fill);
         d.setCornerRadius(dp(radius));
         if (stroke != Color.TRANSPARENT) d.setStroke(dp(1), stroke);
+        return d;
+    }
+
+    private GradientDrawable cardBackground(int radius) {
+        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{0xff191c23, 0xff111319});
+        d.setCornerRadius(dp(radius));
+        d.setStroke(dp(1), 0xff343741);
         return d;
     }
 
@@ -643,21 +654,21 @@ public class MainActivity extends AppCompatActivity {
             float w = getWidth();
             float h = getHeight();
             Path arc = new Path();
-            arc.moveTo(w * 0.36f, h * 0.40f);
-            arc.cubicTo(w * 0.58f, -h * 0.02f, w * 0.88f, h * 0.02f,
-                    w * 1.18f, h * 0.78f);
+            arc.moveTo(w * 0.42f, h * 0.34f);
+            arc.cubicTo(w * 0.62f, h * 0.02f, w * 0.87f, h * 0.04f,
+                    w * 1.10f, h * 0.64f);
 
             glow.setStyle(Paint.Style.STROKE);
-            glow.setStrokeWidth(17 * density);
-            glow.setAlpha(80);
-            glow.setShader(new LinearGradient(w * 0.35f, 0, w, h,
+            glow.setStrokeWidth(14 * density);
+            glow.setAlpha(62);
+            glow.setShader(new LinearGradient(w * 0.42f, 0, w, h,
                     Color.rgb(20, 110, 255), Color.rgb(225, 35, 245), Shader.TileMode.CLAMP));
-            glow.setShadowLayer(26 * density, 0, 0, Color.rgb(50, 95, 255));
+            glow.setShadowLayer(20 * density, 0, 0, Color.rgb(50, 95, 255));
             canvas.drawPath(arc, glow);
 
             line.setStyle(Paint.Style.STROKE);
-            line.setStrokeWidth(2.8f * density);
-            line.setShader(new LinearGradient(w * 0.4f, 0, w, h,
+            line.setStrokeWidth(2.4f * density);
+            line.setShader(new LinearGradient(w * 0.42f, 0, w, h,
                     Color.rgb(30, 125, 255), Color.rgb(230, 35, 245), Shader.TileMode.CLAMP));
             line.setShadowLayer(8 * density, 0, 0, Color.rgb(102, 60, 255));
             canvas.drawPath(arc, line);
