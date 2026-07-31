@@ -229,13 +229,13 @@ public class MainActivity extends AppCompatActivity {
         metrics.addView(metricRow);
         content.addView(metrics);
 
-        addSpacer(14);
+        addSpacer(22);
         addGradientButton("Send heartbeat now", v -> {
             HeartbeatManager.sendHeartbeat(this);
             updateLastSent();
             Toast.makeText(this, "Heartbeat sent", Toast.LENGTH_SHORT).show();
         });
-        addSpacer(14);
+        addSpacer(22);
 
         LinearLayout keepAlive = card(16);
         LinearLayout heading = new LinearLayout(this);
@@ -464,7 +464,7 @@ public class MainActivity extends AppCompatActivity {
         b.setBackground(gradient(0xff168fff, 0xffe52bf5, 100));
         b.setOnClickListener(listener);
         LinearLayout.LayoutParams lp = full();
-        lp.height = dp(52);
+        lp.height = dp(58);
         lp.setMargins(dp(26), 0, dp(26), 0);
         content.addView(b, lp);
     }
