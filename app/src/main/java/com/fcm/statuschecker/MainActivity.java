@@ -262,7 +262,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void renderSettings() {
-        addTopBar("SETTINGS", true);
         addSpacer(18);
         content.addView(text("Keep FCM\nreliable", WHITE, 32, true));
         content.addView(text("Tune background behavior for your device", MUTED, 14, false));
