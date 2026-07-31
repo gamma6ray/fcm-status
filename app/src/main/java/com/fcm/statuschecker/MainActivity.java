@@ -1,9 +1,6 @@
 package com.fcm.statuschecker;
 
 import android.Manifest;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
@@ -21,6 +19,7 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,7 +33,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
@@ -49,33 +50,35 @@ import java.net.Socket;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQ_POST_NOTIFICATIONS = 101;
-
     private static final String MCS_HOST = "mtalk.google.com";
     private static final int[] MCS_PORTS = {5228, 5229, 5230, 443};
     private static final int CONNECT_TIMEOUT_MS = 4000;
 
-    private static final int GREEN = Color.parseColor("#2E7D32");
-    private static final int RED = Color.parseColor("#C62828");
-    private static final int AMBER = Color.parseColor("#EF6C00");
-    private static final int TEXT = Color.parseColor("#212121");
-    private static final int MUTED = Color.parseColor("#616161");
+    private static final int BG = Color.rgb(5, 6, 9);
+    private static final int CARD = Color.rgb(20, 22, 27);
+    private static final int CARD_BORDER = Color.rgb(57, 60, 70);
+    private static final int WHITE = Color.rgb(248, 248, 250);
+    private static final int MUTED = Color.rgb(166, 168, 180);
+    private static final int BLUE = Color.rgb(35, 139, 255);
+    private static final int MAGENTA = Color.rgb(224, 38, 245);
+    private static final int GREEN = Color.rgb(70, 235, 102);
+    private static final int RED = Color.rgb(255, 83, 99);
+    private static final int PURPLE = Color.rgb(190, 77, 255);
 
     private LinearLayout content;
+    private boolean settingsPage;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
 
-    // Server probe state.
-    private int probeGeneration = 0;
-    private volatile boolean probing = false;
-    private volatile boolean probeDone = false;
-    private volatile String mcsIp = null;
+    private int probeGeneration;
+    private volatile boolean probing;
+    private volatile boolean probeDone;
+    private volatile String mcsIp;
     private volatile int usedPort = -1;
     private volatile int usedPortMs = -1;
-
-    // Live "last heartbeat" view + updaters.
     private TextView lastSentValue;
+
     private final Runnable ticker = new Runnable() {
-        @Override
-        public void run() {
+        @Override public void run() {
             updateLastSent();
             uiHandler.postDelayed(this, 1000);
         }
@@ -83,26 +86,15 @@ public class MainActivity extends AppCompatActivity {
     private final SharedPreferences.OnSharedPreferenceChangeListener prefListener =
             (sp, key) -> { if (HeartbeatManager.KEY_LAST_SENT.equals(key)) updateLastSent(); };
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        ScrollView scroll = new ScrollView(this);
-        scroll.setBackgroundColor(Color.parseColor("#FAFAFA"));
-
-        content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        int pad = dp(20);
-        content.setPadding(pad, pad, pad, pad);
-        scroll.addView(content);
-
-        setContentView(scroll);
+        getWindow().setStatusBarColor(BG);
+        getWindow().setNavigationBarColor(BG);
+        buildRoot();
         startProbe();
-        render();
     }
 
-    @Override
-    protected void onResume() {
+    @Override protected void onResume() {
         super.onResume();
         render();
         HeartbeatManager.prefs(this).registerOnSharedPreferenceChangeListener(prefListener);
@@ -110,170 +102,244 @@ public class MainActivity extends AppCompatActivity {
         uiHandler.post(ticker);
     }
 
-    @Override
-    protected void onPause() {
+    @Override protected void onPause() {
         super.onPause();
         HeartbeatManager.prefs(this).unregisterOnSharedPreferenceChangeListener(prefListener);
         uiHandler.removeCallbacks(ticker);
     }
 
-    // ---------- Server probe ----------
+    @Override public void onBackPressed() {
+        if (settingsPage) {
+            settingsPage = false;
+            render();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    private void buildRoot() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(BG);
+        content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(18), dp(12), dp(18), dp(20));
+        scroll.addView(content);
+        setContentView(scroll);
+    }
 
     private void startProbe() {
-        final int gen = ++probeGeneration;
+        final int generation = ++probeGeneration;
         probing = true;
         probeDone = false;
         usedPort = -1;
         usedPortMs = -1;
         mcsIp = null;
         new Thread(() -> {
-            try {
-                mcsIp = InetAddress.getByName(MCS_HOST).getHostAddress();
-            } catch (Exception e) {
-                mcsIp = null;
-            }
+            try { mcsIp = InetAddress.getByName(MCS_HOST).getHostAddress(); }
+            catch (Exception ignored) { mcsIp = null; }
             for (int port : MCS_PORTS) {
-                long t0 = SystemClock.elapsedRealtime();
-                try (Socket s = new Socket()) {
-                    s.connect(new InetSocketAddress(MCS_HOST, port), CONNECT_TIMEOUT_MS);
+                long started = SystemClock.elapsedRealtime();
+                try (Socket socket = new Socket()) {
+                    socket.connect(new InetSocketAddress(MCS_HOST, port), CONNECT_TIMEOUT_MS);
                     usedPort = port;
-                    usedPortMs = (int) (SystemClock.elapsedRealtime() - t0);
+                    usedPortMs = (int) (SystemClock.elapsedRealtime() - started);
                     break;
-                } catch (Exception e) {
-                    // try next port
-                }
+                } catch (Exception ignored) { }
             }
             probing = false;
             probeDone = true;
-            if (gen == probeGeneration) {
-                runOnUiThread(this::render);
-            }
+            if (generation == probeGeneration) runOnUiThread(this::render);
         }, "fcm-probe").start();
     }
-
-    // ---------- Render ----------
 
     private void render() {
         content.removeAllViews();
         lastSentValue = null;
+        if (settingsPage) renderSettings(); else renderStatus();
+    }
 
-        addTitle("FCM Status Checker");
-        addSubtitle("Firebase Cloud Messaging connection diagnostics");
-        addSpacer(dp(8));
+    private void renderStatus() {
+        addTopBar("FCM STATUS", false);
+        addSpacer(12);
 
         boolean playOk = isPlayServicesOk();
         boolean online = isOnline();
-        boolean serverReachable = usedPort > 0;
+        boolean reachable = !probeDone || (playOk && online && usedPort > 0);
+        int stateColor = reachable ? GREEN : RED;
 
-        addVerdict(playOk, online, serverReachable);
-        addSpacer(dp(12));
+        TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 32, true);
+        title.setLetterSpacing(0.01f);
+        content.addView(title);
 
-        renderHeartbeatSection();
-        addSpacer(dp(12));
+        LinearLayout subtitleRow = new LinearLayout(this);
+        subtitleRow.setGravity(Gravity.CENTER_VERTICAL);
+        subtitleRow.setPadding(0, dp(6), 0, dp(12));
+        View statusLight = new View(this);
+        statusLight.setBackground(circle(stateColor));
+        LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(14), dp(14));
+        lightLp.setMargins(0, 0, dp(8), 0);
+        subtitleRow.addView(statusLight, lightLp);
+        subtitleRow.addView(text("Google Play Services + FCM server", MUTED, 14, false),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView refresh = iconButton("↻", BLUE, 42);
+        refresh.setContentDescription("Recheck connection");
+        refresh.setOnClickListener(v -> { startProbe(); render(); });
+        subtitleRow.addView(refresh);
+        content.addView(subtitleRow);
 
-        // --- FCM server probe ---
-        addSectionHeader("FCM Server Connection");
-        addSection("Tests whether this device can reach Google's FCM server (" + MCS_HOST
-                + ") and which port it uses. First reachable of 5228, 5229, 5230, 443.");
-        addRow("Host", mcsIp != null ? MCS_HOST + " / " + mcsIp : MCS_HOST, MUTED);
-        if (probing && !probeDone) {
-            addRow("Status", "Checking…", MUTED);
-        } else if (probeDone) {
-            addRow("Server", serverReachable ? "Reachable" : "Unreachable", serverReachable ? GREEN : RED);
-            addRow("Port used", serverReachable ? usedPort + "  (" + usedPortMs + " ms)" : "None reachable",
-                    serverReachable ? GREEN : RED);
-        }
-        addButton(probing ? "Checking…" : "Re-check now", v -> { startProbe(); render(); });
+        LinearLayout metrics = card(14);
+        LinearLayout metricRow = new LinearLayout(this);
+        metricRow.setGravity(Gravity.CENTER_VERTICAL);
+        metricRow.addView(metric("SERVER", probing ? "Checking" : (usedPort > 0 ? "Reachable" : "Unreachable"),
+                probing ? MUTED : stateColor), weight(1));
+        metricRow.addView(metric("PORT", usedPort > 0 ? String.valueOf(usedPort) : "—", MUTED), weight(1));
+        metricRow.addView(metric("NETWORK", networkType(), MUTED), weight(1));
+        metrics.addView(metricRow);
+        content.addView(metrics);
 
-        addSpacer(dp(12));
+        addSpacer(14);
+        addGradientButton("Send heartbeat now", v -> {
+            HeartbeatManager.sendHeartbeat(this);
+            updateLastSent();
+            Toast.makeText(this, "Heartbeat sent", Toast.LENGTH_SHORT).show();
+        });
+        addSpacer(14);
 
-        // --- Google Play Services ---
-        addSectionHeader("Google Play Services");
-        int code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this);
-        addRow("Availability", playStatusText(code), code == ConnectionResult.SUCCESS ? GREEN : RED);
-        addRow("Play Services version", playServicesVersion(), MUTED);
+        LinearLayout keepAlive = card(16);
+        LinearLayout heading = new LinearLayout(this);
+        heading.setGravity(Gravity.CENTER_VERTICAL);
+        heading.addView(text("Keep-alive", WHITE, 21, true), weight(1));
+        SwitchCompat toggle = new SwitchCompat(this);
+        toggle.setChecked(HeartbeatManager.isEnabled(this));
+        toggle.setText("ON");
+        toggle.setTextColor(WHITE);
+        toggle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        toggle.setButtonTintList(null);
+        toggle.setOnCheckedChangeListener((button, checked) -> setKeepAlive(checked));
+        heading.addView(toggle);
+        keepAlive.addView(heading);
+        addDividerTo(keepAlive);
 
-        addSpacer(dp(12));
-
-        // --- Notifications ---
-        addSectionHeader("Notifications");
-        boolean notifEnabled = NotificationManagerCompat.from(this).areNotificationsEnabled();
-        addRow("Notifications enabled", notifEnabled ? "Yes" : "No (blocked)", notifEnabled ? GREEN : RED);
-        if (Build.VERSION.SDK_INT >= 33) {
-            boolean granted = ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-            addRow("POST_NOTIFICATIONS", granted ? "Granted" : "Not granted", granted ? GREEN : AMBER);
-            if (!granted) {
-                addButton("Request notification permission", v ->
-                        ActivityCompat.requestPermissions(this,
-                                new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_POST_NOTIFICATIONS));
-            }
-        }
-
-        addSpacer(dp(12));
-
-        // --- Network / Device ---
-        addSectionHeader("Network & Device");
-        addRow("Internet", online ? "Online (" + networkType() + ")" : "Offline", online ? GREEN : RED);
-        addRow("Model", Build.MANUFACTURER + " " + Build.MODEL, MUTED);
-        addRow("Android", Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")", MUTED);
-
-        addSpacer(dp(16));
-        addButton("Refresh", v -> render());
-        addSpacer(dp(8));
-        addFootnote("Heartbeats use undocumented Play Services broadcasts (verified working on this "
-                + "device). In deep sleep, intervals under ~9 min may be stretched by Doze; keep the app "
-                + "exempt from battery optimization for best results. This app uses no Firebase project.");
+        LinearLayout intervalRow = settingRow("◷", BLUE, "Heartbeat interval", "");
+        Spinner spinner = intervalSpinner();
+        ((LinearLayout) intervalRow.getChildAt(1)).addView(spinner);
+        keepAlive.addView(intervalRow);
+        addDividerTo(keepAlive);
+        LinearLayout lastRow = settingRow("⌁", PURPLE, "Last heartbeat", "");
+        lastSentValue = text("never", MUTED, 14, true);
+        lastSentValue.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        ((LinearLayout) lastRow.getChildAt(1)).addView(lastSentValue, 0);
+        keepAlive.addView(lastRow);
+        updateLastSent();
+        content.addView(keepAlive);
+        addSpacer(18);
+        bottomNav(false);
     }
 
-    // ---------- Heartbeat section ----------
+    private void renderSettings() {
+        addTopBar("SETTINGS", true);
+        addSpacer(18);
+        content.addView(text("Keep FCM\nreliable", WHITE, 32, true));
+        content.addView(text("Tune background behavior for your device", MUTED, 14, false));
+        addSpacer(18);
 
-    private void renderHeartbeatSection() {
-        boolean running = HeartbeatManager.isEnabled(this);
+        LinearLayout access = card(16);
+        access.addView(text("Background access", WHITE, 20, true));
+        access.addView(settingRow("◈", GREEN, "Battery optimization",
+                isIgnoringBatteryOptimizations() ? "Exempt" : "Open"), full());
+        addDividerTo(access);
+        access.addView(settingRow("◉", BLUE, "Autostart guidance", "Open"), full());
+        addDividerTo(access);
+        access.addView(settingRow("●", PURPLE, "Post notification",
+                notificationsGranted() ? "Granted" : "Open"), full());
+        addDividerTo(access);
+        access.addView(settingRow("▣", PURPLE, "Lock in recents guidance", "View"), full());
+        content.addView(access);
+        addSpacer(16);
 
-        addSectionHeader("FCM Keep-Alive (Heartbeat)");
-        addSection("Automatically nudges Google Play Services to send an FCM heartbeat on the interval "
-                + "you choose, keeping the connection fresh (helps when a VPN or long heartbeat delays "
-                + "notifications). Runs in the background as an ongoing notification.");
+        LinearLayout about = card(16);
+        about.addView(text("About", WHITE, 20, true));
+        about.addView(settingRow("ⓘ", PURPLE, "Version", appVersion()), full());
+        about.setOnClickListener(v -> showAbout());
+        content.addView(about);
+        addSpacer(24);
+        bottomNav(true);
+    }
 
-        addRow("Status", running ? "Running" : "Stopped", running ? GREEN : MUTED);
+    private void addTopBar(String label, boolean back) {
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.addView(text(label, WHITE, 15, true), weight(1));
+        TextView action = iconButton(back ? "‹" : "☰", WHITE, 42);
+        action.setOnClickListener(v -> {
+            if (back) { settingsPage = false; render(); } else { settingsPage = true; render(); }
+        });
+        bar.addView(action);
+        content.addView(bar);
+    }
 
-        // Interval spinner row.
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(6), 0, dp(6));
-        TextView l = new TextView(this);
-        l.setText("Interval (minutes)");
-        l.setTextColor(TEXT);
-        l.setTextSize(14);
-        l.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        row.addView(l);
+    private void bottomNav(boolean settingsSelected) {
+        LinearLayout nav = card(18);
+        nav.setPadding(dp(8), dp(8), dp(8), dp(6));
+        Button status = navButton("⌁\nStatus", !settingsSelected);
+        Button settings = navButton("⚙\nSettings", settingsSelected);
+        status.setOnClickListener(v -> { settingsPage = false; render(); });
+        settings.setOnClickListener(v -> { settingsPage = true; render(); });
+        nav.addView(status, weight(1));
+        nav.addView(settings, weight(1));
+        content.addView(nav);
+    }
 
+    private Button navButton(String label, boolean selected) {
+        Button b = new Button(this);
+        b.setText(label);
+        b.setAllCaps(false);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        b.setTextColor(selected ? BLUE : MUTED);
+        b.setGravity(Gravity.CENTER);
+        b.setBackgroundColor(Color.TRANSPARENT);
+        return b;
+    }
+
+    private void setKeepAlive(boolean enabled) {
+        if (enabled == HeartbeatManager.isEnabled(this)) return;
+        HeartbeatManager.setEnabled(this, enabled);
+        if (enabled) {
+            HeartbeatManager.scheduleNext(this);
+            try { ContextCompat.startForegroundService(this, new Intent(this, HeartbeatService.class)); }
+            catch (Exception e) { Toast.makeText(this, "Background service could not start", Toast.LENGTH_LONG).show(); }
+        } else {
+            HeartbeatManager.cancelAlarm(this);
+            stopService(new Intent(this, HeartbeatService.class));
+        }
+        render();
+    }
+
+    private Spinner intervalSpinner() {
         Spinner spinner = new Spinner(this);
         String[] labels = new String[HeartbeatManager.INTERVALS_MIN.length];
-        int selectedIndex = 0;
+        int selected = 0;
         int current = HeartbeatManager.getIntervalMin(this);
-        for (int i = 0; i < HeartbeatManager.INTERVALS_MIN.length; i++) {
-            labels[i] = String.valueOf(HeartbeatManager.INTERVALS_MIN[i]);
-            if (HeartbeatManager.INTERVALS_MIN[i] == current) selectedIndex = i;
+        for (int i = 0; i < labels.length; i++) {
+            labels[i] = HeartbeatManager.INTERVALS_MIN[i] + " minutes";
+            if (HeartbeatManager.INTERVALS_MIN[i] == current) selected = i;
         }
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, labels) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                TextView tv = (TextView) super.getView(position, convertView, parent);
-                tv.setTextColor(GREEN);
-                tv.setTypeface(Typeface.DEFAULT_BOLD);
-                return tv;
+            @Override public View getView(int position, View convertView, ViewGroup parent) {
+                TextView v = (TextView) super.getView(position, convertView, parent);
+                v.setTextColor(WHITE);
+                v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                v.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+                return v;
             }
         };
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-        spinner.setSelection(selectedIndex);
+        spinner.setSelection(selected);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 int chosen = HeartbeatManager.INTERVALS_MIN[position];
                 if (chosen != HeartbeatManager.getIntervalMin(MainActivity.this)) {
                     HeartbeatManager.setIntervalMin(MainActivity.this, chosen);
@@ -284,52 +350,142 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
         });
-        row.addView(spinner);
-        content.addView(row);
-        addDivider();
+        return spinner;
+    }
 
-        lastSentValue = addValueRow("Last heartbeat sent", "…", MUTED);
-        updateLastSent();
-
-        addButton(running ? "Stop keep-alive" : "Start keep-alive", v -> {
-            if (HeartbeatManager.isEnabled(this)) {
-                HeartbeatManager.setEnabled(this, false);
-                HeartbeatManager.cancelAlarm(this);
-                stopService(new Intent(this, HeartbeatService.class));
-            } else {
-                HeartbeatManager.setEnabled(this, true);
-                ContextCompat.startForegroundService(this, new Intent(this, HeartbeatService.class));
-            }
-            render();
-        });
-
-        addButton("Send heartbeat now", v -> {
-            HeartbeatManager.sendHeartbeat(this);
-            updateLastSent();
-            Toast.makeText(this, "Heartbeat broadcast sent.", Toast.LENGTH_SHORT).show();
-        });
-
-        addButton("Open FCM Diagnostics (Google Play Services)", v -> openGcmDiagnostics());
-
-        if (!isIgnoringBatteryOptimizations()) {
-            addButton("Exempt from battery optimization", v -> requestIgnoreBatteryOptimizations());
-        }
+    private LinearLayout settingRow(String icon, int color, String label, String value) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(9), 0, dp(9));
+        TextView iconView = text(icon, color, 20, true);
+        iconView.setGravity(Gravity.CENTER);
+        row.addView(iconView, new LinearLayout.LayoutParams(dp(42), dp(42)));
+        LinearLayout middle = new LinearLayout(this);
+        middle.setGravity(Gravity.CENTER_VERTICAL);
+        middle.addView(text(label, WHITE, 14, false), weight(1));
+        if (!value.isEmpty()) middle.addView(text(value, value.equals("Exempt") || value.equals("Granted") ? GREEN : BLUE, 14, true));
+        middle.addView(text("›", MUTED, 26, false), new LinearLayout.LayoutParams(dp(28), dp(42)));
+        row.addView(middle, weight(1));
+        if (label.equals("Battery optimization")) row.setOnClickListener(v -> requestIgnoreBatteryOptimizations());
+        if (label.equals("Post notification")) row.setOnClickListener(v -> requestNotificationPermission());
+        if (label.contains("Autostart")) row.setOnClickListener(v -> showGuidance("Autostart guidance", "Open App info → Autostart and allow FCM Status. vivo may call this Autostart or Background start."));
+        if (label.contains("Lock")) row.setOnClickListener(v -> showGuidance("Lock in recents", "Open recent apps, find FCM Status, then tap the lock icon. Also set Battery to Unrestricted if available."));
+        return row;
     }
 
     private void updateLastSent() {
         if (lastSentValue == null) return;
-        long t = HeartbeatManager.getLastSent(this);
-        if (t <= 0) {
-            lastSentValue.setText("never");
-            lastSentValue.setTextColor(MUTED);
-            return;
-        }
-        long agoSec = Math.max(0, (System.currentTimeMillis() - t) / 1000);
-        String ago = agoSec < 60 ? agoSec + "s ago" : (agoSec / 60) + "m " + (agoSec % 60) + "s ago";
-        lastSentValue.setText(HeartbeatManager.formatTime(t) + "  (" + ago + ")");
+        long time = HeartbeatManager.getLastSent(this);
+        if (time <= 0) { lastSentValue.setText("never"); lastSentValue.setTextColor(MUTED); return; }
+        long seconds = Math.max(0, (System.currentTimeMillis() - time) / 1000);
+        String ago = seconds < 60 ? seconds + "s ago" : (seconds / 60) + "m " + (seconds % 60) + "s ago";
+        lastSentValue.setText(HeartbeatManager.formatTime(time) + "  (" + ago + ")");
         lastSentValue.setTextColor(GREEN);
+    }
+
+    private void addGradientButton(String label, View.OnClickListener listener) {
+        Button b = new Button(this);
+        b.setText(label);
+        b.setAllCaps(false);
+        b.setTextColor(WHITE);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        b.setTypeface(Typeface.DEFAULT_BOLD);
+        b.setGravity(Gravity.CENTER);
+        b.setBackground(gradient(0xff168fff, 0xffe52bf5, 100));
+        b.setOnClickListener(listener);
+        LinearLayout.LayoutParams lp = full();
+        lp.height = dp(54);
+        content.addView(b, lp);
+    }
+
+    private TextView text(String value, int color, float size, boolean bold) {
+        TextView v = new TextView(this);
+        v.setText(value);
+        v.setTextColor(color);
+        v.setTextSize(TypedValue.COMPLEX_UNIT_SP, size);
+        v.setTypeface(bold ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+        return v;
+    }
+
+    private LinearLayout metric(String label, String value, int valueColor) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER);
+        box.addView(text(label, MUTED, 11, false));
+        box.addView(text(value, valueColor, 15, true));
+        return box;
+    }
+
+    private LinearLayout card(int radius) {
+        LinearLayout v = new LinearLayout(this);
+        v.setOrientation(LinearLayout.VERTICAL);
+        v.setPadding(dp(14), dp(12), dp(14), dp(12));
+        v.setBackground(round(CARD, CARD_BORDER, radius));
+        v.setLayoutParams(full());
+        return v;
+    }
+
+    private TextView iconButton(String glyph, int color, int size) {
+        TextView b = text(glyph, color, 24, false);
+        b.setGravity(Gravity.CENTER);
+        b.setBackground(round(Color.TRANSPARENT, color, size / 2));
+        b.setContentDescription(glyph);
+        b.setLayoutParams(new LinearLayout.LayoutParams(dp(size), dp(size)));
+        return b;
+    }
+
+    private void addDividerTo(LinearLayout parent) {
+        View d = new View(this);
+        d.setBackgroundColor(Color.rgb(48, 50, 58));
+        parent.addView(d, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+    }
+
+    private GradientDrawable round(int fill, int stroke, int radius) {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(fill);
+        d.setCornerRadius(dp(radius));
+        if (stroke != Color.TRANSPARENT) d.setStroke(dp(1), stroke);
+        return d;
+    }
+
+    private GradientDrawable circle(int color) { return round(color, color, 20); }
+
+    private GradientDrawable gradient(int start, int end, int radius) {
+        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{start, end});
+        d.setCornerRadius(dp(radius));
+        return d;
+    }
+
+    private LinearLayout.LayoutParams weight(float weight) {
+        return new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, weight);
+    }
+
+    private LinearLayout.LayoutParams full() {
+        return new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    private void addSpacer(int dp) { View v = new View(this); content.addView(v, new LinearLayout.LayoutParams(1, this.dp(dp))); }
+
+    private boolean isPlayServicesOk() { return GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS; }
+
+    private boolean isOnline() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        NetworkCapabilities c = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        return c != null && c.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                && c.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+    }
+
+    private String networkType() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkCapabilities c = cm == null ? null : cm.getNetworkCapabilities(cm.getActiveNetwork());
+        if (c == null) return "Offline";
+        if (c.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return "VPN";
+        if (c.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return "Wi-Fi";
+        if (c.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) return "Cellular";
+        return "Online";
     }
 
     private boolean isIgnoringBatteryOptimizations() {
@@ -337,234 +493,44 @@ public class MainActivity extends AppCompatActivity {
         return pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
     }
 
+    private boolean notificationsGranted() {
+        return NotificationManagerCompat.from(this).areNotificationsEnabled()
+                && (Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED);
+    }
+
     @SuppressWarnings("BatteryLife")
     private void requestIgnoreBatteryOptimizations() {
+        try { startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName()))); }
+        catch (Exception e) { startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)); }
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_POST_NOTIFICATIONS);
+        } else {
+            startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName()));
+        }
+    }
+
+    private void showGuidance(String title, String message) { new AlertDialog.Builder(this).setTitle(title).setMessage(message).setPositiveButton("OK", null).show(); }
+
+    private void showAbout() {
+        showGuidance("FCM Status Checker", "Version " + appVersion() + "\n\nA lightweight FCM connectivity and keep-alive helper. No Firebase project is required.");
+    }
+
+    private String appVersion() {
         try {
-            Intent i = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:" + getPackageName()));
-            startActivity(i);
-        } catch (Exception e) {
-            try {
-                startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
-            } catch (Exception e2) {
-                Toast.makeText(this, "Open Settings → Battery to exempt this app.", Toast.LENGTH_LONG).show();
-            }
+            PackageInfo p = getPackageManager().getPackageInfo(getPackageName(), 0);
+            return p.versionName != null ? p.versionName : "unknown";
+        } catch (Exception ignored) {
+            return "unknown";
         }
     }
 
-    private void openGcmDiagnostics() {
-        try {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.setComponent(new ComponentName("com.google.android.gms",
-                    "com.google.android.gms.gcm.GcmDiagnostics"));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            return;
-        } catch (Exception e) {
-            // fall back to dialer code
-        }
-        try {
-            ClipboardManager cb = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-            if (cb != null) cb.setPrimaryClip(ClipData.newPlainText("secret code", "*#*#426#*#*"));
-            startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:")));
-            Toast.makeText(this, "Couldn't open it directly. Code copied — type *#*#426#*#* in the dialer.",
-                    Toast.LENGTH_LONG).show();
-        } catch (Exception e2) {
-            Toast.makeText(this, "Could not open FCM diagnostics on this device.", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    // ---------- Checks ----------
-
-    private boolean isPlayServicesOk() {
-        return GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this)
-                == ConnectionResult.SUCCESS;
-    }
-
-    private String playStatusText(int code) {
-        switch (code) {
-            case ConnectionResult.SUCCESS: return "Available and up to date";
-            case ConnectionResult.SERVICE_MISSING: return "Missing on this device";
-            case ConnectionResult.SERVICE_UPDATING: return "Currently updating";
-            case ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED: return "Update required";
-            case ConnectionResult.SERVICE_DISABLED: return "Disabled";
-            case ConnectionResult.SERVICE_INVALID: return "Invalid / corrupt";
-            default: return "Unavailable (code " + code + ")";
-        }
-    }
-
-    private String playServicesVersion() {
-        try {
-            PackageInfo pi = getPackageManager().getPackageInfo("com.google.android.gms", 0);
-            return pi.versionName != null ? pi.versionName : "unknown";
-        } catch (PackageManager.NameNotFoundException e) {
-            return "not installed";
-        }
-    }
-
-    private boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) return false;
-        NetworkCapabilities caps = cm.getNetworkCapabilities(cm.getActiveNetwork());
-        return caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
-    }
-
-    private String networkType() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) return "unknown";
-        NetworkCapabilities caps = cm.getNetworkCapabilities(cm.getActiveNetwork());
-        if (caps == null) return "unknown";
-        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return "VPN";
-        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return "Wi-Fi";
-        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) return "Cellular";
-        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) return "Ethernet";
-        return "other";
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
         render();
     }
 
-    // ---------- UI helpers ----------
-
-    private void addVerdict(boolean playOk, boolean online, boolean serverReachable) {
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        int p = dp(16);
-        card.setPadding(p, p, p, p);
-
-        boolean canConnect = playOk && online && (serverReachable || !probeDone);
-        card.setBackgroundColor(canConnect ? Color.parseColor("#E8F5E9") : Color.parseColor("#FFEBEE"));
-
-        TextView t = new TextView(this);
-        t.setText(canConnect ? "FCM should be able to connect" : "FCM may not be able to connect");
-        t.setTextColor(canConnect ? GREEN : RED);
-        t.setTextSize(18);
-        t.setTypeface(Typeface.DEFAULT_BOLD);
-        card.addView(t);
-
-        TextView d = new TextView(this);
-        String reason;
-        if (!playOk) reason = "Google Play Services is unavailable, so FCM has no transport.";
-        else if (!online) reason = "The device is offline, so FCM cannot reach Google's servers.";
-        else if (probeDone && !serverReachable) reason = "Google's FCM server is not reachable on any "
-                + "port (5228/5229/5230/443) — a firewall or VPN may be blocking it.";
-        else reason = "Play Services is available, the device is online, and the FCM server is reachable.";
-        d.setText(reason);
-        d.setTextColor(TEXT);
-        d.setTextSize(13);
-        d.setPadding(0, dp(4), 0, 0);
-        card.addView(d);
-
-        content.addView(card);
-    }
-
-    private void addTitle(String s) {
-        TextView t = new TextView(this);
-        t.setText(s);
-        t.setTextColor(TEXT);
-        t.setTextSize(24);
-        t.setTypeface(Typeface.DEFAULT_BOLD);
-        content.addView(t);
-    }
-
-    private void addSubtitle(String s) {
-        TextView t = new TextView(this);
-        t.setText(s);
-        t.setTextColor(MUTED);
-        t.setTextSize(13);
-        content.addView(t);
-    }
-
-    private void addSectionHeader(String s) {
-        TextView t = new TextView(this);
-        t.setText(s.toUpperCase());
-        t.setTextColor(Color.parseColor("#1565C0"));
-        t.setTextSize(12);
-        t.setTypeface(Typeface.DEFAULT_BOLD);
-        t.setPadding(0, dp(4), 0, dp(4));
-        content.addView(t);
-    }
-
-    private void addSection(String s) {
-        TextView t = new TextView(this);
-        t.setText(s);
-        t.setTextColor(MUTED);
-        t.setTextSize(12);
-        t.setPadding(0, 0, 0, dp(6));
-        content.addView(t);
-    }
-
-    private void addRow(String label, String value, int valueColor) {
-        addValueRow(label, value, valueColor);
-    }
-
-    private TextView addValueRow(String label, String value, int valueColor) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(0, dp(6), 0, dp(6));
-
-        TextView l = new TextView(this);
-        l.setText(label);
-        l.setTextColor(TEXT);
-        l.setTextSize(14);
-        l.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        row.addView(l);
-
-        TextView v = new TextView(this);
-        v.setText(value);
-        v.setTextColor(valueColor);
-        v.setTextSize(14);
-        v.setTypeface(Typeface.DEFAULT_BOLD);
-        v.setGravity(Gravity.END);
-        v.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.2f));
-        row.addView(v);
-
-        content.addView(row);
-        addDivider();
-        return v;
-    }
-
-    private void addDivider() {
-        View div = new View(this);
-        div.setBackgroundColor(Color.parseColor("#E0E0E0"));
-        div.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(1)));
-        content.addView(div);
-    }
-
-    private void addButton(String label, View.OnClickListener onClick) {
-        Button b = new Button(this);
-        b.setText(label);
-        b.setAllCaps(false);
-        b.setOnClickListener(onClick);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = dp(8);
-        b.setLayoutParams(lp);
-        content.addView(b);
-    }
-
-    private void addFootnote(String s) {
-        TextView t = new TextView(this);
-        t.setText(s);
-        t.setTextColor(MUTED);
-        t.setTextSize(11);
-        t.setPadding(0, dp(8), 0, 0);
-        content.addView(t);
-    }
-
-    private void addSpacer(int h) {
-        View v = new View(this);
-        v.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, h));
-        content.addView(v);
-    }
-
-    private int dp(int v) {
-        return Math.round(v * getResources().getDisplayMetrics().density);
-    }
+    private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 }
