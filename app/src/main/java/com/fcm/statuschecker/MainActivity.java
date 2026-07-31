@@ -178,11 +178,11 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout banner = new FrameLayout(this);
         banner.setBackgroundColor(BG);
         banner.addView(new NeonBanner(this), new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(210)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(170)));
         LinearLayout bannerContent = new LinearLayout(this);
         bannerContent.setOrientation(LinearLayout.VERTICAL);
         bannerContent.setPadding(0, dp(16), 0, 0);
-        TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 34, true);
+        TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 36, true);
         title.setLetterSpacing(0.01f);
         bannerContent.addView(title);
 
@@ -631,15 +631,15 @@ public class MainActivity extends AppCompatActivity {
                     w * 1.18f, h * 0.78f);
 
             glow.setStyle(Paint.Style.STROKE);
-            glow.setStrokeWidth(13 * density);
+            glow.setStrokeWidth(17 * density);
             glow.setAlpha(80);
             glow.setShader(new LinearGradient(w * 0.35f, 0, w, h,
                     Color.rgb(20, 110, 255), Color.rgb(225, 35, 245), Shader.TileMode.CLAMP));
-            glow.setShadowLayer(22 * density, 0, 0, Color.rgb(50, 95, 255));
+            glow.setShadowLayer(26 * density, 0, 0, Color.rgb(50, 95, 255));
             canvas.drawPath(arc, glow);
 
             line.setStyle(Paint.Style.STROKE);
-            line.setStrokeWidth(2.2f * density);
+            line.setStrokeWidth(2.8f * density);
             line.setShader(new LinearGradient(w * 0.4f, 0, w, h,
                     Color.rgb(30, 125, 255), Color.rgb(230, 35, 245), Shader.TileMode.CLAMP));
             line.setShadowLayer(8 * density, 0, 0, Color.rgb(102, 60, 255));
