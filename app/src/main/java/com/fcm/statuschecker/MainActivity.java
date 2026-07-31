@@ -273,27 +273,37 @@ public class MainActivity extends AppCompatActivity {
 
     private void renderSettings() {
         addSpacer(18);
-        content.addView(text("Keep FCM\nreliable", WHITE, 32, true));
-        content.addView(text("Tune background behavior for your device", MUTED, 14, false));
-        addSpacer(18);
+        FrameLayout banner = new FrameLayout(this);
+        banner.setBackgroundColor(BG);
+        banner.addView(new NeonBanner(this), new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(145)));
+        LinearLayout bannerContent = new LinearLayout(this);
+        bannerContent.setOrientation(LinearLayout.VERTICAL);
+        bannerContent.setPadding(0, dp(12), 0, 0);
+        bannerContent.addView(text("Keep FCM\nreliable", WHITE, 32, true));
+        bannerContent.addView(text("Tune background behavior for your device", MUTED, 14, false));
+        banner.addView(bannerContent, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        content.addView(banner);
+        addSpacer(12);
 
         LinearLayout access = card(16);
         access.addView(text("Background access", WHITE, 20, true));
-        access.addView(settingRow(R.drawable.ic_battery, "Battery optimization",
-                isIgnoringBatteryOptimizations() ? "Exempt" : "Open"), full());
+        access.addView(settingRow(0, "Battery optimization",
+                isIgnoringBatteryOptimizations() ? "Exempt" : "Open", true, false), full());
         addDividerTo(access);
-        access.addView(settingRow(R.drawable.ic_autostart, "Autostart guidance", "Open"), full());
+        access.addView(settingRow(0, "Autostart guidance", "Open", true, false), full());
         addDividerTo(access);
-        access.addView(settingRow(R.drawable.ic_notification, "Post notification",
-                notificationsGranted() ? "Granted" : "Open"), full());
+        access.addView(settingRow(0, "Post notification",
+                notificationsGranted() ? "Granted" : "Open", true, false), full());
         addDividerTo(access);
-        access.addView(settingRow(R.drawable.ic_lock, "Lock in recents guidance", "View"), full());
+        access.addView(settingRow(0, "Lock in recents guidance", "View", true, false), full());
         content.addView(access);
         addSpacer(16);
 
         LinearLayout about = card(16);
         about.addView(text("About", WHITE, 20, true));
-        about.addView(settingRow(R.drawable.ic_info, "Version", appVersion()), full());
+        about.addView(settingRow(0, "Version", appVersion(), true, false), full());
         about.setOnClickListener(v -> showAbout());
         content.addView(about);
         addSpacer(24);
