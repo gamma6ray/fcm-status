@@ -254,13 +254,16 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout intervalRow = settingRow(R.drawable.ic_clock, "Heartbeat interval", "", false);
         Spinner spinner = intervalSpinner();
+        spinner.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        spinner.setLayoutParams(new LinearLayout.LayoutParams(dp(170), dp(42)));
         ((LinearLayout) intervalRow.getChildAt(1)).addView(spinner);
         keepAlive.addView(intervalRow);
         addDividerTo(keepAlive);
         LinearLayout lastRow = settingRow(R.drawable.ic_heartbeat, "Last heartbeat", "", false);
         lastSentValue = text("never", MUTED, 14, true);
         lastSentValue.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        ((LinearLayout) lastRow.getChildAt(1)).addView(lastSentValue, 1);
+        ((LinearLayout) lastRow.getChildAt(1)).addView(lastSentValue,
+                new LinearLayout.LayoutParams(dp(250), dp(42)));
         keepAlive.addView(lastRow);
         updateLastSent();
         content.addView(keepAlive);
