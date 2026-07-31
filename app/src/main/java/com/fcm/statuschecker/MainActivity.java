@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -635,26 +636,26 @@ public class MainActivity extends AppCompatActivity {
     private void showGuidance(String title, String message) { new AlertDialog.Builder(this).setTitle(title).setMessage(message).setPositiveButton("OK", null).show(); }
 
     private void openGcmDiagnostics() {
-        Intent secretCode = new Intent("android.provider.Telephony.SECRET_CODE");
-        secretCode.setPackage("com.google.android.gms");
-        secretCode.setData(Uri.parse("android_secret_code://426"));
         try {
-            if (!getPackageManager().queryBroadcastReceivers(secretCode, PackageManager.MATCH_ALL).isEmpty()) {
-                sendBroadcast(secretCode);
-                Toast.makeText(this, "Opening GCM diagnostics", Toast.LENGTH_SHORT).show();
-                return;
-            }
-        } catch (Exception ignored) { }
-
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        if (clipboard != null) {
-            clipboard.setPrimaryClip(ClipData.newPlainText("GCM diagnostics code", "*#*#426#*#*"));
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.setComponent(new ComponentName("com.google.android.gms",
+                    "com.google.android.gms.gcm.GcmDiagnostics"));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            return;
+        } catch (Exception ignored) {
+            // Fall back to the documented dialer code.
         }
         try {
-            startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:*#*#426#*#*")));
-            Toast.makeText(this, "Code copied. Paste it in the dialer and press call.", Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "GCM code copied: *#*#426#*#*", Toast.LENGTH_LONG).show();
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("secret code", "*#*#426#*#*"));
+            }
+            startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:")));
+            Toast.makeText(this, "Couldn't open it directly. Code copied — type *#*#426#*#* in the dialer.",
+                    Toast.LENGTH_LONG).show();
+        } catch (Exception ignored) {
+            Toast.makeText(this, "Could not open FCM diagnostics on this device.", Toast.LENGTH_LONG).show();
         }
     }
 
