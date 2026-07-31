@@ -468,8 +468,14 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER);
-        box.addView(text(label, MUTED, 11, false));
-        box.addView(text(value, valueColor, 15, true));
+        TextView labelView = text(label, MUTED, 11, false);
+        labelView.setGravity(Gravity.CENTER);
+        box.addView(labelView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        TextView valueView = text(value, valueColor, 15, true);
+        valueView.setGravity(Gravity.CENTER);
+        box.addView(valueView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return box;
     }
 
