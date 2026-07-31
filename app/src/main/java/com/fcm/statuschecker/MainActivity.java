@@ -2,8 +2,6 @@ package com.fcm.statuschecker;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -636,27 +634,11 @@ public class MainActivity extends AppCompatActivity {
     private void showGuidance(String title, String message) { new AlertDialog.Builder(this).setTitle(title).setMessage(message).setPositiveButton("OK", null).show(); }
 
     private void openGcmDiagnostics() {
-        try {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.setComponent(new ComponentName("com.google.android.gms",
-                    "com.google.android.gms.gcm.GcmDiagnostics"));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            return;
-        } catch (Exception ignored) {
-            // Fall back to the documented dialer code.
-        }
-        try {
-            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-            if (clipboard != null) {
-                clipboard.setPrimaryClip(ClipData.newPlainText("secret code", "*#*#426#*#*"));
-            }
-            startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:")));
-            Toast.makeText(this, "Couldn't open it directly. Code copied — type *#*#426#*#* in the dialer.",
-                    Toast.LENGTH_LONG).show();
-        } catch (Exception ignored) {
-            Toast.makeText(this, "Could not open FCM diagnostics on this device.", Toast.LENGTH_LONG).show();
-        }
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.setComponent(new ComponentName(
+                "com.google.android.gms",
+                "com.google.android.gms.gcm.GcmDiagnostics"));
+        startActivity(intent);
     }
 
     private void showOutageHistory() {
