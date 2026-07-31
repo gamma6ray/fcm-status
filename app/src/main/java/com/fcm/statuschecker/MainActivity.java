@@ -260,6 +260,14 @@ public class MainActivity extends AppCompatActivity {
         keepAlive.addView(lastRow, full());
         updateLastSent();
         content.addView(keepAlive);
+
+        addSpacer(12);
+        LinearLayout diagnostics = card(16);
+        diagnostics.addView(text("Diagnostics", WHITE, 20, true));
+        diagnostics.addView(diagnosticRow("Open FCM diagnostics", v -> showDiagnostics()), full());
+        addDividerTo(diagnostics);
+        diagnostics.addView(diagnosticRow("View outage history", v -> showOutageHistory()), full());
+        content.addView(diagnostics);
         addSpacer(14);
         bottomNav(false);
     }
@@ -426,6 +434,12 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout settingRow(int iconRes, String label, String value) {
         return settingRow(iconRes, label, value, true);
+    }
+
+    private LinearLayout diagnosticRow(String label, View.OnClickListener listener) {
+        LinearLayout row = settingRow(0, label, "", true, false);
+        row.setOnClickListener(listener);
+        return row;
     }
 
     private LinearLayout settingRow(int iconRes, String label, String value, boolean showChevron) {
@@ -617,6 +631,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showGuidance(String title, String message) { new AlertDialog.Builder(this).setTitle(title).setMessage(message).setPositiveButton("OK", null).show(); }
+
+    private void showDiagnostics() {
+        String server = usedPort > 0 ? "Reachable" : (probing ? "Checking" : "Unreachable");
+        String port = usedPort > 0 ? String.valueOf(usedPort) : "Not connected";
+        showGuidance("FCM diagnostics", "Server: " + server + "\nPort: " + port
+                + "\nNetwork: " + networkType()
+                + "\nLast heartbeat: " + (HeartbeatManager.getLastSent(this) > 0
+                ? HeartbeatManager.formatTime(HeartbeatManager.getLastSent(this)) : "never"));
+    }
+
+    private void showOutageHistory() {
+        showGuidance("Outage history", "No outage history has been recorded yet.");
+    }
 
     private void showAbout() {
         showGuidance("FCM Status Checker", "Version " + appVersion() + "\n\nA lightweight FCM connectivity and keep-alive helper. No Firebase project is required.");
