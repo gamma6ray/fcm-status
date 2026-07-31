@@ -249,14 +249,14 @@ public class MainActivity extends AppCompatActivity {
         keepAlive.addView(heading);
         addDividerTo(keepAlive);
 
-        LinearLayout intervalRow = settingRow(R.drawable.ic_clock, "Heartbeat interval", "", false);
-        ((LinearLayout) intervalRow.getChildAt(1)).addView(intervalSelector());
+        LinearLayout intervalRow = settingRow(R.drawable.ic_clock, "Heartbeat interval", "", false, false);
+        ((LinearLayout) intervalRow.getChildAt(intervalRow.getChildCount() - 1)).addView(intervalSelector());
         keepAlive.addView(intervalRow);
         addDividerTo(keepAlive);
-        LinearLayout lastRow = settingRow(R.drawable.ic_heartbeat, "Last heartbeat", "", false);
+        LinearLayout lastRow = settingRow(R.drawable.ic_heartbeat, "Last heartbeat", "", false, false);
         lastSentValue = text("never", MUTED, 14, true);
         lastSentValue.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        ((LinearLayout) lastRow.getChildAt(1)).addView(lastSentValue,
+        ((LinearLayout) lastRow.getChildAt(lastRow.getChildCount() - 1)).addView(lastSentValue,
                 new LinearLayout.LayoutParams(dp(250), dp(42)));
         keepAlive.addView(lastRow);
         updateLastSent();
@@ -415,6 +415,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private LinearLayout settingRow(int iconRes, String label, String value, boolean showChevron) {
+        return settingRow(iconRes, label, value, showChevron, true);
+    }
+
+    private LinearLayout settingRow(int iconRes, String label, String value,
+                                    boolean showChevron, boolean showIcon) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, dp(4), 0, dp(4));
@@ -422,7 +427,7 @@ public class MainActivity extends AppCompatActivity {
         iconView.setImageResource(iconRes);
         iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         if (label.equals("Last heartbeat")) iconView.setTranslationX(-dp(4));
-        row.addView(iconView, new LinearLayout.LayoutParams(dp(42), dp(42)));
+        if (showIcon) row.addView(iconView, new LinearLayout.LayoutParams(dp(42), dp(42)));
         LinearLayout middle = new LinearLayout(this);
         middle.setGravity(Gravity.CENTER_VERTICAL);
         middle.setMinimumHeight(dp(42));
