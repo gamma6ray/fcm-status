@@ -6,7 +6,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
@@ -26,6 +31,9 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -161,32 +169,45 @@ public class MainActivity extends AppCompatActivity {
 
     private void renderStatus() {
         addTopBar("FCM STATUS", false);
-        addSpacer(12);
-
         boolean playOk = isPlayServicesOk();
         boolean online = isOnline();
         boolean reachable = !probeDone || (playOk && online && usedPort > 0);
         int stateColor = reachable ? GREEN : RED;
 
+        FrameLayout banner = new FrameLayout(this);
+        banner.setBackgroundColor(BG);
+        banner.addView(new NeonBanner(this), new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(230)));
+        LinearLayout bannerContent = new LinearLayout(this);
+        bannerContent.setOrientation(LinearLayout.VERTICAL);
+        bannerContent.setPadding(0, dp(24), 0, 0);
         TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 32, true);
         title.setLetterSpacing(0.01f);
-        content.addView(title);
+        bannerContent.addView(title);
 
         LinearLayout subtitleRow = new LinearLayout(this);
         subtitleRow.setGravity(Gravity.CENTER_VERTICAL);
-        subtitleRow.setPadding(0, dp(6), 0, dp(12));
+        subtitleRow.setPadding(0, dp(7), 0, 0);
         View statusLight = new View(this);
         statusLight.setBackground(circle(stateColor));
-        LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(14), dp(14));
+        LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(16), dp(16));
         lightLp.setMargins(0, 0, dp(8), 0);
         subtitleRow.addView(statusLight, lightLp);
         subtitleRow.addView(text("Google Play Services + FCM server", MUTED, 14, false),
                 new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        TextView refresh = iconButton("↻", BLUE, 42);
+        ImageButton refresh = new ImageButton(this);
+        refresh.setImageResource(R.drawable.ic_recheck);
+        refresh.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        refresh.setBackgroundColor(Color.TRANSPARENT);
+        refresh.setPadding(0, 0, 0, 0);
+        refresh.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
         refresh.setContentDescription("Recheck connection");
         refresh.setOnClickListener(v -> { startProbe(); render(); });
         subtitleRow.addView(refresh);
-        content.addView(subtitleRow);
+        bannerContent.addView(subtitleRow);
+        banner.addView(bannerContent, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        content.addView(banner);
 
         LinearLayout metrics = card(14);
         LinearLayout metricRow = new LinearLayout(this);
@@ -534,4 +555,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
+
+    private static final class NeonBanner extends View {
+        private final Paint glow = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final float density;
+
+        NeonBanner(Context context) {
+            super(context);
+            density = getResources().getDisplayMetrics().density;
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        }
+
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float w = getWidth();
+            float h = getHeight();
+            RectF arc = new RectF(w * 0.34f, -h * 0.95f, w * 1.24f, h * 1.34f);
+
+            glow.setStyle(Paint.Style.STROKE);
+            glow.setStrokeWidth(18 * density);
+            glow.setAlpha(80);
+            glow.setShader(new LinearGradient(w * 0.35f, 0, w, h,
+                    Color.rgb(20, 110, 255), Color.rgb(225, 35, 245), Shader.TileMode.CLAMP));
+            glow.setShadowLayer(22 * density, 0, 0, Color.rgb(50, 95, 255));
+            canvas.drawArc(arc, 202, 62, false, glow);
+
+            line.setStyle(Paint.Style.STROKE);
+            line.setStrokeWidth(2.2f * density);
+            line.setShader(new LinearGradient(w * 0.4f, 0, w, h,
+                    Color.rgb(30, 125, 255), Color.rgb(230, 35, 245), Shader.TileMode.CLAMP));
+            line.setShadowLayer(8 * density, 0, 0, Color.rgb(102, 60, 255));
+            canvas.drawArc(arc, 202, 62, false, line);
+        }
+    }
 }
