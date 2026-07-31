@@ -222,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
         metricRow.addView(metric("SERVER", probing ? "Checking" : (usedPort > 0 ? "Reachable" : "Unreachable"),
                 probing ? MUTED : stateColor), weight(1));
         addMetricDivider(metricRow);
-        metricRow.addView(metric("PORT", usedPort > 0 ? String.valueOf(usedPort) : "—", MUTED), weight(1));
+        metricRow.addView(metric("ADDRESS", MCS_HOST + "(" + (usedPort > 0 ? usedPort : "—") + ")", MUTED), weight(1));
         addMetricDivider(metricRow);
         metricRow.addView(metric("NETWORK", networkType(), MUTED), weight(1));
         metrics.addView(metricRow);
