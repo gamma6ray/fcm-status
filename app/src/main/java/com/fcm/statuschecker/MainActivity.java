@@ -28,15 +28,12 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -253,10 +250,7 @@ public class MainActivity extends AppCompatActivity {
         addDividerTo(keepAlive);
 
         LinearLayout intervalRow = settingRow(R.drawable.ic_clock, "Heartbeat interval", "", false);
-        Spinner spinner = intervalSpinner();
-        spinner.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        spinner.setLayoutParams(new LinearLayout.LayoutParams(dp(170), dp(42)));
-        ((LinearLayout) intervalRow.getChildAt(1)).addView(spinner);
+        ((LinearLayout) intervalRow.getChildAt(1)).addView(intervalSelector());
         keepAlive.addView(intervalRow);
         addDividerTo(keepAlive);
         LinearLayout lastRow = settingRow(R.drawable.ic_heartbeat, "Last heartbeat", "", false);
@@ -373,8 +367,25 @@ public class MainActivity extends AppCompatActivity {
         render();
     }
 
-    private Spinner intervalSpinner() {
-        Spinner spinner = new Spinner(this);
+    private View intervalSelector() {
+        LinearLayout selector = new LinearLayout(this);
+        selector.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        selector.setClickable(true);
+        selector.setFocusable(true);
+        TextView value = text(HeartbeatManager.getIntervalMin(this) + " minutes", WHITE, 14, false);
+        value.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        selector.addView(value, new LinearLayout.LayoutParams(0, dp(42), 1f));
+        ImageView arrow = new ImageView(this);
+        arrow.setImageResource(R.drawable.ic_chevron);
+        arrow.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        selector.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(42)));
+        selector.setOnClickListener(v -> showIntervalPicker());
+        selector.setContentDescription("Heartbeat interval");
+        selector.setLayoutParams(new LinearLayout.LayoutParams(dp(250), dp(42)));
+        return selector;
+    }
+
+    private void showIntervalPicker() {
         String[] labels = new String[HeartbeatManager.INTERVALS_MIN.length];
         int selected = 0;
         int current = HeartbeatManager.getIntervalMin(this);
@@ -382,34 +393,21 @@ public class MainActivity extends AppCompatActivity {
             labels[i] = HeartbeatManager.INTERVALS_MIN[i] + " minutes";
             if (HeartbeatManager.INTERVALS_MIN[i] == current) selected = i;
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_item, labels) {
-            @Override public View getView(int position, View convertView, ViewGroup parent) {
-                TextView v = (TextView) super.getView(position, convertView, parent);
-                v.setTextColor(WHITE);
-                v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-                v.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-                return v;
-            }
-        };
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        spinner.setSelection(selected);
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                int chosen = HeartbeatManager.INTERVALS_MIN[position];
-                if (chosen != HeartbeatManager.getIntervalMin(MainActivity.this)) {
-                    HeartbeatManager.setIntervalMin(MainActivity.this, chosen);
-                    if (HeartbeatManager.isEnabled(MainActivity.this)) {
-                        HeartbeatManager.cancelAlarm(MainActivity.this);
-                        HeartbeatManager.scheduleNext(MainActivity.this);
-                        HeartbeatManager.updateNotification(MainActivity.this);
+        new AlertDialog.Builder(this)
+                .setTitle("Heartbeat interval")
+                .setSingleChoiceItems(labels, selected, (dialog, which) -> {
+                    int chosen = HeartbeatManager.INTERVALS_MIN[which];
+                    if (chosen != HeartbeatManager.getIntervalMin(MainActivity.this)) {
+                        HeartbeatManager.setIntervalMin(MainActivity.this, chosen);
+                        if (HeartbeatManager.isEnabled(MainActivity.this)) {
+                            HeartbeatManager.cancelAlarm(MainActivity.this);
+                            HeartbeatManager.scheduleNext(MainActivity.this);
+                            HeartbeatManager.updateNotification(MainActivity.this);
+                        }
+                        render();
                     }
-                }
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) { }
-        });
-        return spinner;
+                    dialog.dismiss();
+                }).show();
     }
 
     private LinearLayout settingRow(int iconRes, String label, String value) {
