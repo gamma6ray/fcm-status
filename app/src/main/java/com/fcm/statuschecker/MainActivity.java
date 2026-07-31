@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         scroll.setBackgroundColor(BG);
         content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dp(18), dp(12), dp(18), dp(20));
+        content.setPadding(dp(18), dp(16), dp(18), dp(16));
         scroll.addView(content);
         setContentView(scroll);
     }
@@ -177,10 +177,10 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout banner = new FrameLayout(this);
         banner.setBackgroundColor(BG);
         banner.addView(new NeonBanner(this), new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(230)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(210)));
         LinearLayout bannerContent = new LinearLayout(this);
         bannerContent.setOrientation(LinearLayout.VERTICAL);
-        bannerContent.setPadding(0, dp(24), 0, 0);
+        bannerContent.setPadding(0, dp(18), 0, 0);
         TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 32, true);
         title.setLetterSpacing(0.01f);
         bannerContent.addView(title);
@@ -191,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         ImageView statusLight = new ImageView(this);
         statusLight.setImageResource(reachable ? R.drawable.ic_status_green : R.drawable.ic_status_red);
         statusLight.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(32), dp(32));
+        LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(24), dp(24));
         lightLp.setMargins(0, 0, dp(8), 0);
         subtitleRow.addView(statusLight, lightLp);
         subtitleRow.addView(text("Google Play Services + FCM server", MUTED, 14, false),
@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         refresh.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         refresh.setBackgroundColor(Color.TRANSPARENT);
         refresh.setPadding(0, 0, 0, 0);
-        refresh.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
+        refresh.setLayoutParams(new LinearLayout.LayoutParams(dp(42), dp(42)));
         refresh.setContentDescription("Recheck connection");
         refresh.setOnClickListener(v -> { startProbe(); render(); });
         subtitleRow.addView(refresh);
@@ -215,7 +215,9 @@ public class MainActivity extends AppCompatActivity {
         metricRow.setGravity(Gravity.CENTER_VERTICAL);
         metricRow.addView(metric("SERVER", probing ? "Checking" : (usedPort > 0 ? "Reachable" : "Unreachable"),
                 probing ? MUTED : stateColor), weight(1));
+        addMetricDivider(metricRow);
         metricRow.addView(metric("PORT", usedPort > 0 ? String.valueOf(usedPort) : "—", MUTED), weight(1));
+        addMetricDivider(metricRow);
         metricRow.addView(metric("NETWORK", networkType(), MUTED), weight(1));
         metrics.addView(metricRow);
         content.addView(metrics);
@@ -243,19 +245,19 @@ public class MainActivity extends AppCompatActivity {
         keepAlive.addView(heading);
         addDividerTo(keepAlive);
 
-        LinearLayout intervalRow = settingRow(R.drawable.ic_clock, "Heartbeat interval", "");
+        LinearLayout intervalRow = settingRow(R.drawable.ic_clock, "Heartbeat interval", "", false);
         Spinner spinner = intervalSpinner();
         ((LinearLayout) intervalRow.getChildAt(1)).addView(spinner);
         keepAlive.addView(intervalRow);
         addDividerTo(keepAlive);
-        LinearLayout lastRow = settingRow(R.drawable.ic_heartbeat, "Last heartbeat", "");
+        LinearLayout lastRow = settingRow(R.drawable.ic_heartbeat, "Last heartbeat", "", false);
         lastSentValue = text("never", MUTED, 14, true);
         lastSentValue.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         ((LinearLayout) lastRow.getChildAt(1)).addView(lastSentValue, 1);
         keepAlive.addView(lastRow);
         updateLastSent();
         content.addView(keepAlive);
-        addSpacer(18);
+        addSpacer(14);
         bottomNav(false);
     }
 
@@ -329,6 +331,10 @@ public class MainActivity extends AppCompatActivity {
         icon.setImageResource(iconRes);
         icon.setAlpha(selected ? 1f : 0.55f);
         icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        if (selected) {
+            icon.setBackground(round(0xff10294c, Color.TRANSPARENT, 18));
+            icon.setPadding(dp(7), dp(4), dp(7), dp(4));
+        }
         item.addView(icon, new LinearLayout.LayoutParams(dp(28), dp(28)));
         TextView title = text(label, selected ? BLUE : MUTED, 12, selected);
         title.setGravity(Gravity.CENTER);
@@ -391,22 +397,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private LinearLayout settingRow(int iconRes, String label, String value) {
+        return settingRow(iconRes, label, value, true);
+    }
+
+    private LinearLayout settingRow(int iconRes, String label, String value, boolean showChevron) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(9), 0, dp(9));
+        row.setPadding(0, dp(5), 0, dp(5));
         ImageView iconView = new ImageView(this);
         iconView.setImageResource(iconRes);
         iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         iconView.setPadding(dp(5), dp(5), dp(5), dp(5));
-        row.addView(iconView, new LinearLayout.LayoutParams(dp(42), dp(42)));
+        row.addView(iconView, new LinearLayout.LayoutParams(dp(38), dp(38)));
         LinearLayout middle = new LinearLayout(this);
         middle.setGravity(Gravity.CENTER_VERTICAL);
         middle.addView(text(label, WHITE, 14, false), weight(1));
         if (!value.isEmpty()) middle.addView(text(value, value.equals("Exempt") || value.equals("Granted") ? GREEN : BLUE, 14, true));
-        ImageView arrow = new ImageView(this);
-        arrow.setImageResource(R.drawable.ic_chevron);
-        arrow.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        middle.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(42)));
+        if (showChevron) {
+            ImageView arrow = new ImageView(this);
+            arrow.setImageResource(R.drawable.ic_chevron);
+            arrow.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            middle.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(38)));
+        }
         row.addView(middle, weight(1));
         if (label.equals("Battery optimization")) row.setOnClickListener(v -> requestIgnoreBatteryOptimizations());
         if (label.equals("Post notification")) row.setOnClickListener(v -> requestNotificationPermission());
@@ -436,7 +448,8 @@ public class MainActivity extends AppCompatActivity {
         b.setBackground(gradient(0xff168fff, 0xffe52bf5, 100));
         b.setOnClickListener(listener);
         LinearLayout.LayoutParams lp = full();
-        lp.height = dp(54);
+        lp.height = dp(52);
+        lp.setMargins(dp(4), 0, dp(4), 0);
         content.addView(b, lp);
     }
 
@@ -456,6 +469,12 @@ public class MainActivity extends AppCompatActivity {
         box.addView(text(label, MUTED, 11, false));
         box.addView(text(value, valueColor, 15, true));
         return box;
+    }
+
+    private void addMetricDivider(LinearLayout row) {
+        View divider = new View(this);
+        divider.setBackgroundColor(Color.rgb(57, 60, 70));
+        row.addView(divider, new LinearLayout.LayoutParams(dp(1), dp(42)));
     }
 
     private LinearLayout card(int radius) {
@@ -580,9 +599,9 @@ public class MainActivity extends AppCompatActivity {
             float w = getWidth();
             float h = getHeight();
             Path arc = new Path();
-            arc.moveTo(w * 0.40f, h * 0.18f);
-            arc.cubicTo(w * 0.66f, -h * 0.05f, w * 0.90f, h * 0.08f,
-                    w * 1.18f, h * 0.58f);
+            arc.moveTo(w * 0.38f, h * 0.30f);
+            arc.cubicTo(w * 0.62f, h * 0.02f, w * 0.90f, h * 0.08f,
+                    w * 1.18f, h * 0.70f);
 
             glow.setStyle(Paint.Style.STROKE);
             glow.setStrokeWidth(13 * density);
