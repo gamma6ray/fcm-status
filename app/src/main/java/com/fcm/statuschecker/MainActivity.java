@@ -420,6 +420,7 @@ public class MainActivity extends AppCompatActivity {
         ImageView iconView = new ImageView(this);
         iconView.setImageResource(iconRes);
         iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        if (label.equals("Last heartbeat")) iconView.setTranslationX(-dp(4));
         row.addView(iconView, new LinearLayout.LayoutParams(dp(42), dp(42)));
         LinearLayout middle = new LinearLayout(this);
         middle.setGravity(Gravity.CENTER_VERTICAL);
