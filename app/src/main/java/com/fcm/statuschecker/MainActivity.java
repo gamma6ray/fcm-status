@@ -2,6 +2,8 @@ package com.fcm.statuschecker;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -264,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
         addSpacer(12);
         LinearLayout diagnostics = card(16);
         diagnostics.addView(text("Diagnostics", WHITE, 20, true));
-        diagnostics.addView(diagnosticRow("Open FCM diagnostics", v -> showDiagnostics()), full());
+        diagnostics.addView(diagnosticRow("Open FCM diagnostics", v -> openGcmDiagnostics()), full());
         addDividerTo(diagnostics);
         diagnostics.addView(diagnosticRow("View outage history", v -> showOutageHistory()), full());
         content.addView(diagnostics);
@@ -632,13 +634,28 @@ public class MainActivity extends AppCompatActivity {
 
     private void showGuidance(String title, String message) { new AlertDialog.Builder(this).setTitle(title).setMessage(message).setPositiveButton("OK", null).show(); }
 
-    private void showDiagnostics() {
-        String server = usedPort > 0 ? "Reachable" : (probing ? "Checking" : "Unreachable");
-        String port = usedPort > 0 ? String.valueOf(usedPort) : "Not connected";
-        showGuidance("FCM diagnostics", "Server: " + server + "\nPort: " + port
-                + "\nNetwork: " + networkType()
-                + "\nLast heartbeat: " + (HeartbeatManager.getLastSent(this) > 0
-                ? HeartbeatManager.formatTime(HeartbeatManager.getLastSent(this)) : "never"));
+    private void openGcmDiagnostics() {
+        Intent secretCode = new Intent("android.provider.Telephony.SECRET_CODE");
+        secretCode.setPackage("com.google.android.gms");
+        secretCode.setData(Uri.parse("android_secret_code://426"));
+        try {
+            if (!getPackageManager().queryBroadcastReceivers(secretCode, PackageManager.MATCH_ALL).isEmpty()) {
+                sendBroadcast(secretCode);
+                Toast.makeText(this, "Opening GCM diagnostics", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } catch (Exception ignored) { }
+
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(ClipData.newPlainText("GCM diagnostics code", "*#*#426#*#*"));
+        }
+        try {
+            startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:*#*#426#*#*")));
+            Toast.makeText(this, "Code copied. Paste it in the dialer and press call.", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "GCM code copied: *#*#426#*#*", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void showOutageHistory() {
