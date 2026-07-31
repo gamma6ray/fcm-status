@@ -216,6 +216,13 @@ public class MainActivity extends AppCompatActivity {
         refresh.setContentDescription("Recheck connection");
         refresh.setOnClickListener(v -> { startProbe(); render(); });
         subtitleRow.addView(refresh);
+        TextView retry = text("Retry", BLUE, 13, true);
+        retry.setGravity(Gravity.CENTER_VERTICAL);
+        retry.setPadding(0, 0, 0, 0);
+        retry.setContentDescription("Retry connection check");
+        retry.setOnClickListener(v -> { startProbe(); render(); });
+        subtitleRow.addView(retry, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(28)));
         bannerContent.addView(subtitleRow);
         banner.addView(bannerContent, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
