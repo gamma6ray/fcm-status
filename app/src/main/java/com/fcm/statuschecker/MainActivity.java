@@ -177,31 +177,31 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout banner = new FrameLayout(this);
         banner.setBackgroundColor(BG);
         banner.addView(new NeonBanner(this), new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(210)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(194)));
         LinearLayout bannerContent = new LinearLayout(this);
         bannerContent.setOrientation(LinearLayout.VERTICAL);
-        bannerContent.setPadding(0, dp(18), 0, 0);
+        bannerContent.setPadding(0, dp(16), 0, 0);
         TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 32, true);
         title.setLetterSpacing(0.01f);
         bannerContent.addView(title);
 
         LinearLayout subtitleRow = new LinearLayout(this);
         subtitleRow.setGravity(Gravity.CENTER_VERTICAL);
-        subtitleRow.setPadding(0, dp(7), 0, 0);
+        subtitleRow.setPadding(0, dp(5), 0, 0);
         ImageView statusLight = new ImageView(this);
         statusLight.setImageResource(reachable ? R.drawable.ic_status_green : R.drawable.ic_status_red);
         statusLight.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(24), dp(24));
+        LinearLayout.LayoutParams lightLp = new LinearLayout.LayoutParams(dp(20), dp(20));
         lightLp.setMargins(0, 0, dp(8), 0);
         subtitleRow.addView(statusLight, lightLp);
-        subtitleRow.addView(text("Google Play Services + FCM server", MUTED, 14, false),
+        subtitleRow.addView(text("Google Play Services + FCM server", MUTED, 13, false),
                 new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         ImageButton refresh = new ImageButton(this);
         refresh.setImageResource(R.drawable.ic_recheck);
         refresh.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         refresh.setBackgroundColor(Color.TRANSPARENT);
         refresh.setPadding(0, 0, 0, 0);
-        refresh.setLayoutParams(new LinearLayout.LayoutParams(dp(42), dp(42)));
+        refresh.setLayoutParams(new LinearLayout.LayoutParams(dp(36), dp(36)));
         refresh.setContentDescription("Recheck connection");
         refresh.setOnClickListener(v -> { startProbe(); render(); });
         subtitleRow.addView(refresh);
@@ -211,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
         content.addView(banner);
 
         LinearLayout metrics = card(14);
+        metrics.setPadding(dp(14), dp(8), dp(14), dp(8));
         LinearLayout metricRow = new LinearLayout(this);
         metricRow.setGravity(Gravity.CENTER_VERTICAL);
         metricRow.addView(metric("SERVER", probing ? "Checking" : (usedPort > 0 ? "Reachable" : "Unreachable"),
@@ -335,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
             icon.setBackground(round(0xff10294c, Color.TRANSPARENT, 18));
             icon.setPadding(dp(7), dp(4), dp(7), dp(4));
         }
-        item.addView(icon, new LinearLayout.LayoutParams(dp(28), dp(28)));
+        item.addView(icon, new LinearLayout.LayoutParams(selected ? dp(44) : dp(28), dp(28)));
         TextView title = text(label, selected ? BLUE : MUTED, 12, selected);
         title.setGravity(Gravity.CENTER);
         item.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(22)));
@@ -449,7 +450,7 @@ public class MainActivity extends AppCompatActivity {
         b.setOnClickListener(listener);
         LinearLayout.LayoutParams lp = full();
         lp.height = dp(52);
-        lp.setMargins(dp(4), 0, dp(4), 0);
+        lp.setMargins(dp(26), 0, dp(26), 0);
         content.addView(b, lp);
     }
 
@@ -599,9 +600,9 @@ public class MainActivity extends AppCompatActivity {
             float w = getWidth();
             float h = getHeight();
             Path arc = new Path();
-            arc.moveTo(w * 0.38f, h * 0.30f);
-            arc.cubicTo(w * 0.62f, h * 0.02f, w * 0.90f, h * 0.08f,
-                    w * 1.18f, h * 0.70f);
+            arc.moveTo(w * 0.36f, h * 0.40f);
+            arc.cubicTo(w * 0.58f, -h * 0.02f, w * 0.88f, h * 0.02f,
+                    w * 1.18f, h * 0.78f);
 
             glow.setStyle(Paint.Style.STROKE);
             glow.setStrokeWidth(13 * density);
