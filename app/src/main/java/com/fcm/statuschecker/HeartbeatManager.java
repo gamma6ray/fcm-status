@@ -142,7 +142,7 @@ public final class HeartbeatManager {
         PendingIntent content = PendingIntent.getActivity(c, 0, new Intent(c, MainActivity.class),
                 Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
         return new NotificationCompat.Builder(c, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher_concept)
+                .setSmallIcon(R.drawable.ic_launcher_neon_concept)
                 .setContentTitle("FCM keep-alive active")
                 .setContentText("Every " + getIntervalMin(c) + " min · last sent " + last)
                 .setOngoing(true)
