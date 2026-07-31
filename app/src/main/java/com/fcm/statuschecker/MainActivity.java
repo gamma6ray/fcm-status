@@ -34,6 +34,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -430,7 +431,7 @@ public class MainActivity extends AppCompatActivity {
             labels[i] = HeartbeatManager.INTERVALS_MIN[i] + " minutes";
             if (HeartbeatManager.INTERVALS_MIN[i] == current) selected = i;
         }
-        new AlertDialog.Builder(this)
+        AlertDialog picker = new AlertDialog.Builder(this)
                 .setTitle("Heartbeat interval")
                 .setSingleChoiceItems(labels, selected, (dialog, which) -> {
                     int chosen = HeartbeatManager.INTERVALS_MIN[which];
@@ -444,7 +445,9 @@ public class MainActivity extends AppCompatActivity {
                         render();
                     }
                     dialog.dismiss();
-                }).show();
+                }).create();
+        picker.setOnShowListener(d -> styleDialog(picker));
+        picker.show();
     }
 
     private LinearLayout settingRow(int iconRes, String label, String value) {
@@ -645,7 +648,45 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showGuidance(String title, String message) { new AlertDialog.Builder(this).setTitle(title).setMessage(message).setPositiveButton("OK", null).show(); }
+    private void showGuidance(String title, String message) {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .create();
+        dialog.setOnShowListener(d -> styleDialog(dialog));
+        dialog.show();
+    }
+
+    private void styleDialog(AlertDialog dialog) {
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(cardBackground(18));
+        }
+        TextView title = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+        if (title != null) {
+            title.setTextColor(WHITE);
+            title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 21);
+            title.setTypeface(Typeface.DEFAULT_BOLD);
+        }
+        TextView message = dialog.findViewById(android.R.id.message);
+        if (message != null) {
+            message.setTextColor(MUTED);
+            message.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        }
+        ListView list = dialog.getListView();
+        if (list != null) {
+            list.setBackgroundColor(CARD);
+            for (int i = 0; i < list.getChildCount(); i++) {
+                View child = list.getChildAt(i);
+                if (child instanceof TextView) ((TextView) child).setTextColor(WHITE);
+            }
+        }
+        TextView positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (positive != null) {
+            positive.setTextColor(MAGENTA);
+            positive.setTypeface(Typeface.DEFAULT_BOLD);
+        }
+    }
 
     private void openGcmDiagnostics() {
         Intent intent = new Intent(Intent.ACTION_MAIN);
