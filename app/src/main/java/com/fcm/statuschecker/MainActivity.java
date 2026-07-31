@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout banner = new FrameLayout(this);
         banner.setBackgroundColor(BG);
         banner.addView(new NeonBanner(this), new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(194)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(160)));
         LinearLayout bannerContent = new LinearLayout(this);
         bannerContent.setOrientation(LinearLayout.VERTICAL);
         bannerContent.setPadding(0, dp(16), 0, 0);
@@ -214,6 +214,7 @@ public class MainActivity extends AppCompatActivity {
         metrics.setPadding(dp(14), dp(8), dp(14), dp(8));
         LinearLayout metricRow = new LinearLayout(this);
         metricRow.setGravity(Gravity.CENTER_VERTICAL);
+        metricRow.setMinimumHeight(dp(60));
         metricRow.addView(metric("SERVER", probing ? "Checking" : (usedPort > 0 ? "Reachable" : "Unreachable"),
                 probing ? MUTED : stateColor), weight(1));
         addMetricDivider(metricRow);
