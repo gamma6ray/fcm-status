@@ -178,11 +178,11 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout banner = new FrameLayout(this);
         banner.setBackgroundColor(BG);
         banner.addView(new NeonBanner(this), new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(160)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(210)));
         LinearLayout bannerContent = new LinearLayout(this);
         bannerContent.setOrientation(LinearLayout.VERTICAL);
         bannerContent.setPadding(0, dp(16), 0, 0);
-        TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 32, true);
+        TextView title = text("FCM is\n" + (reachable ? "reachable" : "unreachable"), WHITE, 34, true);
         title.setLetterSpacing(0.01f);
         bannerContent.addView(title);
 
