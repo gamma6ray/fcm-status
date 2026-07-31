@@ -405,15 +405,17 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout settingRow(int iconRes, String label, String value, boolean showChevron) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(0, dp(5), 0, dp(5));
+        row.setPadding(0, dp(4), 0, dp(4));
         ImageView iconView = new ImageView(this);
         iconView.setImageResource(iconRes);
         iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        iconView.setPadding(dp(5), dp(5), dp(5), dp(5));
-        row.addView(iconView, new LinearLayout.LayoutParams(dp(38), dp(38)));
+        row.addView(iconView, new LinearLayout.LayoutParams(dp(42), dp(42)));
         LinearLayout middle = new LinearLayout(this);
         middle.setGravity(Gravity.CENTER_VERTICAL);
-        middle.addView(text(label, WHITE, 14, false), weight(1));
+        middle.setMinimumHeight(dp(42));
+        TextView labelView = text(label, WHITE, 14, false);
+        labelView.setGravity(Gravity.CENTER_VERTICAL);
+        middle.addView(labelView, weight(1));
         if (!value.isEmpty()) middle.addView(text(value, value.equals("Exempt") || value.equals("Granted") ? GREEN : BLUE, 14, true));
         if (showChevron) {
             ImageView arrow = new ImageView(this);
