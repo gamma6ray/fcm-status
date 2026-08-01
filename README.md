@@ -35,8 +35,11 @@ The app also has an in-app button that opens the system's Doze whitelist directl
 ## Screenshots
 
 <p align="center">
-  <img src="assets/screenshot.jpg" alt="FCM Status Checker screenshot" width="300">
+  <img src="assets/status-screen.png" alt="FCM Status Checker status screen" width="300">
+  <img src="assets/settings-screen.png" alt="FCM Status Checker settings screen" width="300">
 </p>
+
+The current screens were verified on an Android 15 emulator at 1080 × 2400 and on a vivo Android 15 phone.
 
 ## Download
 
