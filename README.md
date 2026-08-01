@@ -45,6 +45,20 @@ On vivo devices, also check **Background power consumption management** and choo
 
 On vivo and other manufacturer ROMs, allow **Autostart** or **Background start** for FCM Status. If the system provides a **Lock in recents** option, lock FCM Status there. The Settings screen includes an info button with fallback paths for devices that use different menu names.
 
+### Android Doze testing
+
+For troubleshooting, Doze can be temporarily disabled from a computer with ADB:
+
+```bash
+adb shell dumpsys deviceidle disable
+```
+
+This is useful for confirming whether Doze is affecting heartbeat delivery. It is a testing command, not a permanent app setting; a normal app cannot run it for itself without root or ADB permission. Restore normal Doze behavior with:
+
+```bash
+adb shell dumpsys deviceidle enable
+```
+
 ## Download
 
 Pre-built APK: [Releases](https://github.com/gamma6ray/fcm-status/releases)
