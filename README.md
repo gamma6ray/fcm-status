@@ -9,8 +9,6 @@ FCM Status Checker is an Android utility that tests whether Google Play Services
   <img src="assets/settings-screen.png" alt="FCM Status Checker settings screen" width="300">
 </p>
 
-The current screens were verified on an Android 15 emulator using the Samsung Galaxy S25 aspect ratio (1080 × 2340) and on a vivo Android 15 phone.
-
 ## What it checks
 
 - **FCM server reachability** — probes `mtalk.google.com:5228` and reports whether the server is reachable
