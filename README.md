@@ -53,7 +53,7 @@ For troubleshooting, Doze can be temporarily disabled from a computer with ADB:
 adb shell dumpsys deviceidle disable
 ```
 
-This is useful for confirming whether Doze is affecting heartbeat delivery. It is a testing command, not a permanent app setting; a normal app cannot run it for itself without root or ADB permission. Restore normal Doze behavior with:
+This is useful for confirming whether Doze is affecting message notifications. It is a testing command, not a permanent app setting; a normal app cannot run it for itself without root or ADB permission. Restore normal Doze behavior with:
 
 ```bash
 adb shell dumpsys deviceidle enable
