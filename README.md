@@ -2,6 +2,15 @@
 
 FCM Status Checker is an Android utility that tests whether Google Play Services can reach the Firebase Cloud Messaging (FCM) server and keeps the connection active with scheduled heartbeat checks. The project aims to help users identify and reduce FCM delivery failures caused by Doze, battery optimization, aggressive background restrictions, and unstable network or VPN conditions—without requiring root access, a Firebase project, or `google-services.json`.
 
+## Screenshots
+
+<p align="center">
+  <img src="assets/status-screen.png" alt="FCM Status Checker status screen" width="300">
+  <img src="assets/settings-screen.png" alt="FCM Status Checker settings screen" width="300">
+</p>
+
+The current screens were verified on an Android 15 emulator using the Samsung Galaxy S25 aspect ratio (1080 × 2340) and on a vivo Android 15 phone.
+
 ## What it checks
 
 - **FCM server reachability** — probes `mtalk.google.com:5228` and reports whether the server is reachable
@@ -35,15 +44,6 @@ On vivo devices, also check **Background power consumption management** and choo
 ### Autostart and recent-apps guidance
 
 On vivo and other manufacturer ROMs, allow **Autostart** or **Background start** for FCM Status. If the system provides a **Lock in recents** option, lock FCM Status there. The Settings screen includes an info button with fallback paths for devices that use different menu names.
-
-## Screenshots
-
-<p align="center">
-  <img src="assets/status-screen.png" alt="FCM Status Checker status screen" width="300">
-  <img src="assets/settings-screen.png" alt="FCM Status Checker settings screen" width="300">
-</p>
-
-The current screens were verified on an Android 15 emulator using the Samsung Galaxy S25 aspect ratio (1080 × 2340) and on a vivo Android 15 phone.
 
 ## Download
 
