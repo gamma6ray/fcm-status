@@ -517,6 +517,7 @@ public class MainActivity extends AppCompatActivity {
         if (label.contains("Autostart")) row.setOnClickListener(v -> openAutostartSettings());
         if (label.contains("Autostart")) row.setOnClickListener(v -> showGuidance("Autostart guidance", "Open App info → Autostart and allow FCM Status. vivo may call this Autostart or Background start."));
         if (label.contains("Lock")) row.setOnClickListener(v -> showGuidance("Lock in recents", "Open recent apps, find FCM Status, then tap the lock icon. Also set Battery to Unrestricted if available."));
+        if (label.contains("Autostart")) row.setOnClickListener(v -> openAutostartSettings());
         return row;
     }
 
@@ -666,8 +667,13 @@ public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("BatteryLife")
     private void requestIgnoreBatteryOptimizations() {
         try {
-            startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:" + getPackageName())));
+            if (isIgnoringBatteryOptimizations()) {
+                startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:" + getPackageName())));
+            } else {
+                startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                        Uri.parse("package:" + getPackageName())));
+            }
         } catch (Exception e) {
             showGuidance("Battery optimization",
                     "Open App info → Battery, then choose Unrestricted or Not optimized for FCM Status.");
