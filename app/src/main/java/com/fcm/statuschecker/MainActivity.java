@@ -507,6 +507,7 @@ public class MainActivity extends AppCompatActivity {
             info.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
             info.setBackgroundColor(Color.TRANSPARENT);
             info.setPadding(dp(6), dp(6), dp(6), dp(6));
+            info.setTranslationY(dp(2));
             info.setContentDescription(label + " instructions");
             info.setOnClickListener(v -> showFallbackInstructions(label));
             LinearLayout labelGroup = new LinearLayout(this);
