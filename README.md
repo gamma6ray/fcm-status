@@ -1,4 +1,4 @@
-# FCM Status Checker
+# FCM Status Checker — No Root Required
 
 FCM Status Checker is an Android utility that tests whether Google Play Services can reach the Firebase Cloud Messaging (FCM) server and keeps the connection active with scheduled heartbeat checks. The project aims to help users identify and reduce FCM delivery failures caused by Doze, battery optimization, aggressive background restrictions, and unstable network or VPN conditions—without requiring root access, a Firebase project, or `google-services.json`.
 
