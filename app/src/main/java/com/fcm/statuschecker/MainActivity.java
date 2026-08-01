@@ -327,6 +327,8 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout about = card(16);
         about.addView(text("About", WHITE, 20, true));
+        about.addView(settingRow(0, "Google Play Services", googlePlayServicesVersion(), false, false), full());
+        addDividerTo(about);
         about.addView(settingRow(0, "Version", appVersion(), true, false), full());
         about.setOnClickListener(v -> showAbout());
         content.addView(about);
@@ -512,6 +514,7 @@ public class MainActivity extends AppCompatActivity {
                         ViewGroup.LayoutParams.WRAP_CONTENT));
         if (label.equals("Battery optimization")) row.setOnClickListener(v -> requestIgnoreBatteryOptimizations());
         if (label.equals("Post notification")) row.setOnClickListener(v -> requestNotificationPermission());
+        if (label.contains("Autostart")) row.setOnClickListener(v -> openAutostartSettings());
         if (label.contains("Autostart")) row.setOnClickListener(v -> showGuidance("Autostart guidance", "Open App info → Autostart and allow FCM Status. vivo may call this Autostart or Background start."));
         if (label.contains("Lock")) row.setOnClickListener(v -> showGuidance("Lock in recents", "Open recent apps, find FCM Status, then tap the lock icon. Also set Battery to Unrestricted if available."));
         return row;
@@ -623,6 +626,15 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isPlayServicesOk() { return GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS; }
 
+    private String googlePlayServicesVersion() {
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo("com.google.android.gms", 0);
+            return info.versionName == null ? "Installed" : info.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            return "Unavailable";
+        }
+    }
+
     private boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm == null) return false;
@@ -653,8 +665,23 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressWarnings("BatteryLife")
     private void requestIgnoreBatteryOptimizations() {
-        try { startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName()))); }
-        catch (Exception e) { startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)); }
+        try {
+            startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.parse("package:" + getPackageName())));
+        } catch (Exception e) {
+            showGuidance("Battery optimization",
+                    "Open App info → Battery, then choose Unrestricted or Not optimized for FCM Status.");
+        }
+    }
+
+    private void openAutostartSettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + getPackageName())));
+        } catch (Exception e) {
+            showGuidance("Autostart guidance",
+                    "Open App info → Autostart and allow FCM Status. vivo may call this Autostart or Background start.");
+        }
     }
 
     private void requestNotificationPermission() {
