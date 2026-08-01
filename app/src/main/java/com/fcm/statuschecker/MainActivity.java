@@ -246,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
         metricRow.addView(metric("SERVER", probing ? "Checking" : (usedPort > 0 ? "Reachable" : "Unreachable"),
                 probing ? MUTED : stateColor), weight(1));
         addMetricDivider(metricRow);
-        metricRow.addView(metric("ADDRESS", MCS_HOST + "(" + (usedPort > 0 ? usedPort : "—") + ")", MUTED), weight(1));
+        metricRow.addView(metric("ADDRESS", MCS_HOST + "\n(" + (usedPort > 0 ? usedPort : "—") + ")", MUTED), weight(1));
         addMetricDivider(metricRow);
         metricRow.addView(metric("NETWORK", networkType(), MUTED), weight(1));
         metrics.addView(metricRow);
@@ -602,8 +602,11 @@ public class MainActivity extends AppCompatActivity {
         labelView.setGravity(Gravity.CENTER);
         box.addView(labelView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextView valueView = text(value, valueColor, 14, true);
+        float valueSize = value.startsWith("mtalk.google.com") ? 12 : 13;
+        TextView valueView = text(value, valueColor, valueSize, true);
         valueView.setGravity(Gravity.CENTER);
+        valueView.setMaxLines(2);
+        valueView.setIncludeFontPadding(false);
         box.addView(valueView, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return box;
