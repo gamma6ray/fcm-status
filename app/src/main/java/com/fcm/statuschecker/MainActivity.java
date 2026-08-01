@@ -509,7 +509,8 @@ public class MainActivity extends AppCompatActivity {
             arrow.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
             middle.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(38)));
         }
-        row.addView(middle, showIcon ? weight(1) :
+        boolean hasFallbackInfo = label.equals("Battery optimization") || label.contains("Autostart");
+        row.addView(middle, hasFallbackInfo || showIcon ? weight(1) :
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT));
         if (label.equals("Battery optimization")) row.setOnClickListener(v -> requestIgnoreBatteryOptimizations());
@@ -518,7 +519,36 @@ public class MainActivity extends AppCompatActivity {
         if (label.contains("Autostart")) row.setOnClickListener(v -> showGuidance("Autostart guidance", "Open App info → Autostart and allow FCM Status. vivo may call this Autostart or Background start."));
         if (label.contains("Lock")) row.setOnClickListener(v -> showGuidance("Lock in recents", "Open recent apps, find FCM Status, then tap the lock icon. Also set Battery to Unrestricted if available."));
         if (label.contains("Autostart")) row.setOnClickListener(v -> openAutostartSettings());
+        if (hasFallbackInfo) {
+            ImageButton info = new ImageButton(this);
+            info.setImageResource(R.drawable.ic_info);
+            info.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            info.setBackgroundColor(Color.TRANSPARENT);
+            info.setPadding(dp(8), dp(8), dp(8), dp(8));
+            info.setContentDescription(label + " instructions");
+            info.setOnClickListener(v -> showFallbackInstructions(label));
+            row.addView(info, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        }
         return row;
+    }
+
+    private void showFallbackInstructions(String label) {
+        if (label.equals("Battery optimization")) {
+            showGuidance("Battery optimization",
+                    "Open Settings > Apps > FCM Status > Battery or Battery usage. "
+                            + "Select Unrestricted or Allow background usage.\n\n"
+                            + "If vivo shows Background power consumption management, choose "
+                            + "High background power usage or Don't restrict background power usage.\n\n"
+                            + "If needed, open Settings > Apps > Special app access > Battery optimization, "
+                            + "select All apps > FCM Status, and choose Don't optimize.");
+        } else {
+            showGuidance("Autostart guidance",
+                    "Open Settings > Apps > Special app access > Autostart, then allow FCM Status.\n\n"
+                            + "If that menu is missing, try Settings > More settings > Permission management "
+                            + "> Autostart > FCM Status.\n\n"
+                            + "On older vivo/iManager versions, open iManager > App Manager > "
+                            + "Autostart manager and enable FCM Status.");
+        }
     }
 
     private void updateLastSent() {
