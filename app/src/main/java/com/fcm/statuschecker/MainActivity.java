@@ -503,13 +503,23 @@ public class MainActivity extends AppCompatActivity {
         middle.addView(labelView, new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         if (!value.isEmpty()) middle.addView(text(value, value.equals("Exempt") || value.equals("Granted") ? GREEN : BLUE, 14, true));
+        boolean hasFallbackInfo = label.equals("Battery optimization") || label.contains("Autostart");
+        if (hasFallbackInfo) {
+            ImageButton info = new ImageButton(this);
+            info.setImageResource(R.drawable.ic_info);
+            info.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            info.setBackgroundColor(Color.TRANSPARENT);
+            info.setPadding(dp(6), dp(6), dp(6), dp(6));
+            info.setContentDescription(label + " instructions");
+            info.setOnClickListener(v -> showFallbackInstructions(label));
+            middle.addView(info, new LinearLayout.LayoutParams(dp(36), dp(42)));
+        }
         if (showChevron) {
             ImageView arrow = new ImageView(this);
             arrow.setImageResource(R.drawable.ic_chevron);
             arrow.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
             middle.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(38)));
         }
-        boolean hasFallbackInfo = label.equals("Battery optimization") || label.contains("Autostart");
         row.addView(middle, hasFallbackInfo || showIcon ? weight(1) :
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -519,16 +529,6 @@ public class MainActivity extends AppCompatActivity {
         if (label.contains("Autostart")) row.setOnClickListener(v -> showGuidance("Autostart guidance", "Open App info → Autostart and allow FCM Status. vivo may call this Autostart or Background start."));
         if (label.contains("Lock")) row.setOnClickListener(v -> showGuidance("Lock in recents", "Open recent apps, find FCM Status, then tap the lock icon. Also set Battery to Unrestricted if available."));
         if (label.contains("Autostart")) row.setOnClickListener(v -> openAutostartSettings());
-        if (hasFallbackInfo) {
-            ImageButton info = new ImageButton(this);
-            info.setImageResource(R.drawable.ic_info);
-            info.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            info.setBackgroundColor(Color.TRANSPARENT);
-            info.setPadding(dp(8), dp(8), dp(8), dp(8));
-            info.setContentDescription(label + " instructions");
-            info.setOnClickListener(v -> showFallbackInstructions(label));
-            row.addView(info, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        }
         return row;
     }
 
