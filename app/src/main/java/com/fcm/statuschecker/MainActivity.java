@@ -500,9 +500,6 @@ public class MainActivity extends AppCompatActivity {
         TextView labelView = text(label, WHITE, 14, false);
         labelView.setSingleLine(true);
         labelView.setGravity(Gravity.CENTER_VERTICAL);
-        middle.addView(labelView, new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
-        if (!value.isEmpty()) middle.addView(text(value, value.equals("Exempt") || value.equals("Granted") ? GREEN : BLUE, 14, true));
         boolean hasFallbackInfo = label.equals("Battery optimization") || label.contains("Autostart");
         if (hasFallbackInfo) {
             ImageButton info = new ImageButton(this);
@@ -512,8 +509,18 @@ public class MainActivity extends AppCompatActivity {
             info.setPadding(dp(6), dp(6), dp(6), dp(6));
             info.setContentDescription(label + " instructions");
             info.setOnClickListener(v -> showFallbackInstructions(label));
-            middle.addView(info, new LinearLayout.LayoutParams(dp(36), dp(42)));
+            LinearLayout labelGroup = new LinearLayout(this);
+            labelGroup.setGravity(Gravity.CENTER_VERTICAL);
+            labelGroup.addView(labelView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            labelGroup.addView(info, new LinearLayout.LayoutParams(dp(36), dp(42)));
+            middle.addView(labelGroup, new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        } else {
+            middle.addView(labelView, new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         }
+        if (!value.isEmpty()) middle.addView(text(value, value.equals("Exempt") || value.equals("Granted") ? GREEN : BLUE, 14, true));
         if (showChevron) {
             ImageView arrow = new ImageView(this);
             arrow.setImageResource(R.drawable.ic_chevron);
